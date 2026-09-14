@@ -1,0 +1,181 @@
+/* Программа и подбор программы — префикс pg- */
+
+/* ---------- hero ---------- */
+.pg-hero {
+  position: relative; overflow: hidden; isolation: isolate;
+  padding: 22px 20px 20px; border-radius: 32px;
+  background: var(--grad-brand); color: #fff;
+}
+.pg-hero::before {
+  content: ""; position: absolute; z-index: -2; right: -80px; top: -70px;
+  width: 280px; height: 280px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(200, 183, 138, .45) 0%, rgba(200, 183, 138, 0) 68%);
+}
+.pg-hero__body { position: relative; z-index: 1; min-height: 232px; }
+.pg-kicker {
+  display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px 0 10px;
+  border-radius: var(--pill); background: rgba(255, 255, 255, .16);
+  font-size: 12px; font-weight: 500; letter-spacing: .02em; white-space: nowrap;
+}
+.app .pg-hero__title { margin-top: 14px; max-width: 250px; font-size: 30px; font-weight: 600; line-height: 1.08; letter-spacing: -.025em; text-wrap: balance; }
+.app .pg-hero__short { margin-top: 10px; max-width: 176px; font-size: 15px; line-height: 1.38; color: rgba(255, 255, 255, .84); }
+.pg-hero__illu { position: absolute; z-index: 0; right: -24px; top: 120px; width: 196px; height: 164px; }
+/* ДНК с песочными часами шире остальных — без сдвига вправо, чтобы часы не срезались краем */
+.pg-hero__illu[data-kind="program-antiage"] { right: -12px; }
+.pg-facts { position: relative; z-index: 1; margin-top: 16px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.pg-facts--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+/* затемнённая плитка: внизу градиент уходит в песочный, белая подложка там теряла контраст */
+.pg-fact { min-width: 0; padding: 12px 12px 11px; border-radius: 18px; background: rgba(17, 16, 19, .12); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.pg-fact b { display: block; font-size: 15px; font-weight: 600; line-height: 1.15; letter-spacing: -.01em; }
+.pg-fact small { display: block; margin-top: 4px; font-size: 12px; line-height: 1.25; color: rgba(255, 255, 255, .9); }
+
+/* ---------- как устроена ---------- */
+.pg-steps { position: relative; display: grid; gap: 0; }
+.pg-step { position: relative; display: grid; grid-template-columns: 36px 1fr; gap: 14px; padding-bottom: 18px; }
+.pg-step:last-child { padding-bottom: 0; }
+.pg-step::before { content: ""; position: absolute; left: 17px; top: 38px; bottom: 2px; width: 2px; border-radius: 1px; background: var(--sage-2); }
+.pg-step:last-child::before { display: none; }
+.pg-step__n { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--sage); color: var(--deep); font-size: 13px; font-weight: 600; }
+.pg-step.is-start .pg-step__n { background: var(--ink); color: #fff; }
+.pg-step__main { padding-top: 7px; min-width: 0; }
+.pg-step__main b { display: block; font-size: 16px; font-weight: 500; line-height: 1.25; }
+.app .pg-step__main p { margin-top: 4px; font-size: 14px; line-height: 1.45; color: var(--ink-2); }
+
+/* ---------- отзывы ---------- */
+/* scroll-snap без scroll-padding сам прокручивал ленту на 20px и прижимал первую карточку к краю */
+.rail.pg-revs { scroll-padding-inline: 20px; }
+.pg-rev { width: 254px; display: flex; flex-direction: column; gap: 10px; padding: 18px 16px 16px; border-radius: 24px; background: var(--soft); cursor: pointer; }
+.pg-rev__big { font-size: 30px; font-weight: 600; line-height: 1; letter-spacing: -.025em; color: var(--green); }
+.pg-rev__big small { display: block; margin-top: 6px; font-size: 14px; font-weight: 500; letter-spacing: 0; color: var(--ink-2); }
+.pg-rev__res { font-size: 18px; font-weight: 600; line-height: 1.2; letter-spacing: -.01em; color: var(--green); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.pg-rev__text { font-size: 14px; line-height: 1.42; color: var(--ink-2); display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.pg-rev__text--lead { font-size: 19px; font-weight: 500; line-height: 1.3; letter-spacing: -.01em; color: var(--ink); text-wrap: balance; }
+.pg-rev__who { margin-top: auto; padding-top: 4px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+.pg-rev__ava { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: #fff; color: var(--green); font-size: 12px; font-weight: 600; }
+
+/* ---------- команда ---------- */
+.pg-team { border-radius: 24px; background: var(--soft); overflow: hidden; }
+.pg-doc { position: relative; display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px 14px 14px 16px; text-align: left; }
+.pg-doc + .pg-doc::before { content: ""; position: absolute; top: 0; left: 80px; right: 16px; height: 1px; background: var(--line-2); opacity: .7; }
+.pg-doc__main { flex: 1; min-width: 0; display: grid; gap: 3px; }
+.pg-doc__main b { font-size: 16px; font-weight: 500; line-height: 1.2; }
+.pg-doc__main small { font-size: 14px; line-height: 1.35; color: var(--ink-2); }
+.pg-doc__exp { font-size: 13px; line-height: 1.3; color: var(--muted); }
+.pg-doc__chev { color: var(--muted-2); }
+
+/* ---------- стоимость ---------- */
+.pg-cost { padding: 18px 12px 12px; border-radius: 28px; background: var(--sand-soft); }
+.pg-cost__lead { display: flex; gap: 12px; padding: 0 6px 16px; }
+.pg-cost__ico { flex: none; width: 40px; height: 40px; border-radius: 13px; display: grid; place-items: center; background: #fff; color: var(--gold); }
+.pg-cost__lead b { display: block; font-size: 18px; font-weight: 600; line-height: 1.2; letter-spacing: -.01em; }
+.app .pg-cost__lead p { margin-top: 4px; font-size: 14px; line-height: 1.42; color: var(--ink-2); }
+.pg-consult { display: grid; gap: 14px; padding: 12px 12px 14px; border-radius: 22px; background: #fff; cursor: pointer; box-shadow: 0 8px 22px -16px rgba(17, 16, 19, .35); }
+.pg-consult__top { display: flex; align-items: center; gap: 14px; }
+.pg-consult__illu { position: relative; flex: none; width: 76px; height: 76px; border-radius: 18px; overflow: hidden; background: var(--tone-bg, var(--soft)); }
+.pg-consult__illu > svg { position: absolute; inset: 6%; width: 88% !important; height: 88% !important; }
+.pg-consult__main { min-width: 0; display: grid; gap: 3px; }
+.pg-consult__label { font-size: 12px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--gold); }
+.pg-consult__main b { font-size: 16px; font-weight: 500; line-height: 1.2; }
+.pg-consult__main small { font-size: 13px; line-height: 1.3; color: var(--muted); }
+.pg-consult__foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 2px 0 4px; }
+.pg-consult__price { font-size: 22px; font-weight: 600; line-height: 1.1; letter-spacing: -.01em; }
+.pg-consult__price small { display: block; margin-top: 3px; font-size: 13px; font-weight: 400; letter-spacing: 0; color: var(--muted); }
+.app .pg-consult__gift { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-radius: 14px; background: var(--sage); color: var(--deep); font-size: 14px; font-weight: 500; }
+.pg-consult__gift .ico { color: var(--green); }
+.pg-consult .btn--sm { height: 44px; padding: 0 18px; }
+
+/* дисклеймер: свой отступ, т. к. `.app p {margin:0}` гасит margin-top у .disclaimer */
+.pg-disc { margin-top: 28px; }
+
+/* ---------- панель снизу ---------- */
+.buybar .pg-bar-side { flex: none; padding: 0 18px; }
+.buybar .pg-bar { flex: 1; min-width: 0; display: grid; gap: 10px; }
+.app .pg-bar__note { padding-inline: 4px; font-size: 13px; line-height: 1.3; color: var(--ink-2); text-align: center; }
+.pg-bar__note b { font-weight: 600; color: var(--ink); }
+.pg-bar__btns { display: flex; gap: 10px; }
+.pg-bar__btns .btn { font-size: 15px; }
+.pg-bar__btns .btn--primary { flex: 1; min-width: 0; }
+
+/* ================================ квиз ================================ */
+/* Кнопки шага всегда внизу экрана, даже если вопрос короткий. */
+.pg-quiz { min-height: 100%; display: flex; flex-direction: column; }
+.phone--tall .pg-quiz { min-height: 748px; }
+.pg-quiz__body { flex: 1 0 auto; }
+.pg-quiz .buybar .btn { font-size: 15px; }
+
+.pg-qhead { padding-top: 6px; padding-bottom: 18px; }
+.pg-qhead__row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.pg-qhead__label { font-size: 12px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--green); }
+.pg-qhead__step { display: inline-flex; align-items: center; gap: 4px; font-size: 14px; font-weight: 500; color: var(--ink-2); }
+.pg-qhead__step .ico { color: var(--green); }
+.pg-qhead__count { margin-right: 6px; padding: 3px 9px; border-radius: var(--pill); background: var(--sage); color: var(--deep); font-size: 13px; font-style: normal; font-weight: 500; }
+.pg-qhead__bar { margin-top: 10px; height: 6px; }
+.app .pg-qhead__title { margin-top: 22px; font-size: 30px; font-weight: 600; line-height: 1.1; letter-spacing: -.025em; text-wrap: balance; }
+.app .pg-qhead__sub { margin-top: 8px; font-size: 15px; line-height: 1.45; color: var(--muted); max-width: 330px; }
+
+.pg-opts { display: grid; gap: 10px; }
+.pg-opts .opt { padding: 14px 16px 14px 14px; }
+
+.app .pg-hint { margin-top: 16px; display: flex; gap: 8px; padding: 0 4px; font-size: 14px; line-height: 1.4; color: var(--muted); }
+.pg-hint .ico { flex: none; margin-top: 1px; color: var(--green); }
+
+/* симптомы — ровный чек-лист на всю ширину */
+.pg-chips { display: grid; gap: 8px; }
+.pg-chips .pg-sym {
+  width: 100%; height: auto; min-height: 52px; padding: 12px 14px 12px 18px;
+  justify-content: space-between; gap: 12px; border-radius: 18px;
+  white-space: normal; text-align: left; line-height: 1.3; color: var(--ink);
+}
+.pg-sym > span:first-child { min-width: 0; }
+.pg-sym__box { flex: none; width: 24px; height: 24px; border-radius: 8px; display: grid; place-items: center; background: #fff; box-shadow: inset 0 0 0 1.5px var(--line-2); color: #fff; }
+.pg-chips .pg-sym.on { background: var(--sage); color: var(--deep); box-shadow: inset 0 0 0 1.5px var(--green); }
+.pg-sym.on .pg-sym__box { background: var(--green); box-shadow: none; }
+.pg-sym.on .pg-sym__box .ico { color: #fff; }
+.pg-chips .pg-sym--none { margin-top: 6px; background: #fff; box-shadow: inset 0 0 0 1.5px var(--line); color: var(--ink-2); }
+.pg-sym--none .pg-sym__box { border-radius: 50%; background: var(--soft); box-shadow: none; }
+.app .pg-count { margin-top: 16px; font-size: 14px; color: var(--muted); }
+.pg-count.on { color: var(--green); font-weight: 500; }
+
+/* результат */
+.pg-answers .tag { height: 32px; }
+.pg-sec-tight { margin-top: 24px; }
+.pg-match {
+  position: relative; overflow: hidden; isolation: isolate; display: block; cursor: pointer;
+  padding: 20px 20px 18px; border-radius: 32px; background: var(--grad-brand); color: #fff;
+}
+.pg-match::before {
+  content: ""; position: absolute; z-index: -2; right: -70px; top: -60px; width: 240px; height: 240px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(200, 183, 138, .42) 0%, rgba(200, 183, 138, 0) 68%);
+}
+.pg-match__body { position: relative; z-index: 1; min-height: 160px; }
+.app .pg-match__title { margin-top: 14px; max-width: 210px; font-size: 22px; font-weight: 600; line-height: 1.12; letter-spacing: -.02em; text-wrap: balance; overflow-wrap: break-word; }
+.app .pg-match__short { margin-top: 8px; max-width: 170px; font-size: 14px; line-height: 1.38; color: rgba(255, 255, 255, .84); }
+.pg-match__illu { position: absolute; z-index: 0; right: -6px; top: 84px; width: 146px; height: 124px; }
+.pg-match__foot { position: relative; z-index: 1; margin-top: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.pg-match__price { font-size: 14px; color: rgba(255, 255, 255, .8); }
+/* формат программы — свойство продукта; в теле карточки, т. к. рядом с кнопкой «Онлайн или в клинике» переносилось */
+.pg-match__fmt { margin-top: 12px; display: flex; align-items: center; gap: 6px; max-width: 176px; font-size: 13px; font-weight: 500; line-height: 1.25; white-space: nowrap; color: #fff; }
+.pg-match .btn--sm { height: 44px; padding: 0 16px; }
+
+.pg-first { padding: 16px; border-radius: 28px; background: #fff; box-shadow: inset 0 0 0 1.5px var(--line); }
+.app .pg-first__why { display: flex; gap: 8px; padding: 10px 12px; border-radius: 16px; background: var(--sage); font-size: 14px; line-height: 1.38; color: var(--deep); }
+.pg-first__why .ico { flex: none; margin-top: 1px; color: var(--green); }
+.pg-first__row { margin-top: 14px; display: flex; align-items: center; gap: 14px; cursor: pointer; }
+.pg-first__illu { position: relative; flex: none; width: 88px; height: 88px; border-radius: 22px; overflow: hidden; background: var(--tone-bg, var(--soft)); }
+.pg-first__illu > svg { position: absolute; inset: 6%; width: 88% !important; height: 88% !important; }
+.pg-first__main { min-width: 0; display: grid; gap: 3px; }
+.pg-first__kicker { font-size: 13px; color: var(--green); font-weight: 500; }
+.pg-first__main b { font-size: 18px; font-weight: 600; line-height: 1.2; letter-spacing: -.01em; }
+.pg-first__main small { font-size: 13px; line-height: 1.3; color: var(--muted); }
+.pg-first__foot { margin-top: 16px; padding-left: 2px; }
+.pg-first__price { min-width: 0; font-size: 26px; font-weight: 600; line-height: 1.1; letter-spacing: -.02em; }
+.pg-first__price small { display: block; margin-top: 4px; font-size: 13px; font-weight: 500; line-height: 1.3; letter-spacing: 0; color: var(--green); }
+.pg-first__btns { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pg-first__btns .btn { height: 50px; padding: 0 12px; font-size: 15px; }
+/* альтернатива первому шагу: онлайн-консультация — вторичной строкой, не спорит с основной кнопкой */
+.pg-first__alt { margin-top: 12px; display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px 10px 10px; border-radius: 18px; background: var(--soft); text-align: left; }
+.pg-first__alt-ico { flex: none; width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; background: #fff; color: var(--green); }
+.pg-first__alt-main { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.pg-first__alt-main b { font-size: 15px; font-weight: 500; line-height: 1.25; }
+.pg-first__alt-main small { font-size: 13px; line-height: 1.3; color: var(--muted); }
+.pg-first__alt-chev { flex: none; color: var(--muted-2); }

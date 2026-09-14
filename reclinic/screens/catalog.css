@@ -1,0 +1,92 @@
+/* Каталог */
+
+.ct-head { padding: 4px 20px 16px; }
+.ct-head__title { font-size: 30px; font-weight: 600; line-height: 1.08; letter-spacing: -.025em; }
+.ct .ct-head__sub { margin-top: 5px; font-size: 14px; color: var(--muted); }
+
+.ct-search { display: flex; align-items: center; gap: 10px; height: 50px; padding: 0 8px 0 16px; border-radius: 18px; background: var(--soft); cursor: text; }
+.ct-search__ico { color: var(--muted); }
+.ct-search input { flex: 1; min-width: 0; height: 100%; border: 0; padding: 0; background: transparent; outline: none; font: inherit; font-size: 16px; color: var(--ink); -webkit-appearance: none; appearance: none; }
+.ct-search input::placeholder { color: var(--muted); }
+.ct-search input::-webkit-search-cancel-button { display: none; }
+.ct-search__clear { flex: none; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: #fff; color: var(--ink-2); }
+
+.ct-goals { gap: 6px; }
+.ct-goal { flex: none; display: inline-flex; align-items: center; gap: 5px; height: 36px; padding: 0 14px; border-radius: var(--pill); background: #fff; box-shadow: inset 0 0 0 1.5px var(--line); font-size: 14px; color: var(--ink-2); white-space: nowrap; }
+.ct-goal.on { padding-left: 11px; background: var(--sage); box-shadow: inset 0 0 0 1.5px var(--green); color: var(--deep); font-weight: 500; }
+.ct-goal.on .ico { color: var(--green); }
+
+/* строка «N услуг · сортировка» — вплотную к списку */
+.ct-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; }
+.ct-bar__count { min-width: 0; font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ct-bar__count span { font-weight: 400; color: var(--muted); }
+.ct-sort { flex: none; display: inline-flex; align-items: center; gap: 7px; height: 36px; padding: 0 14px 0 12px; border-radius: var(--pill); background: var(--soft); font-size: 14px; color: var(--ink-2); }
+.ct-sort .ico { color: var(--green); }
+.ct .ct-list { margin-top: 14px; }
+.ct .ct-bar + .ct-sec, .ct .ct-bar + .ct-group { margin-top: 18px; }
+
+/* промо: песочная плашка */
+.ct-promo { display: flex; align-items: center; gap: 12px; padding: 14px 16px 14px 14px; border-radius: 24px; background: var(--grad-sand); cursor: pointer; }
+.ct-promo__ico { flex: none; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: #fff; color: var(--gold); }
+.ct-promo__main { flex: 1; min-width: 0; display: grid; gap: 3px; }
+.ct-promo__main b { font-size: 15px; font-weight: 500; line-height: 1.25; }
+.ct-promo__main small { font-size: 13px; line-height: 1.3; color: #7A6435; }
+.ct-promo__price { flex: none; display: grid; justify-items: end; line-height: 1.1; }
+.ct-promo__price s { font-size: 13px; color: #7A6435; opacity: .75; }
+.ct-promo__price em { margin-top: 1px; font-style: normal; font-size: 20px; font-weight: 600; color: var(--deep); }
+.ct-promo__price small { font-size: 12px; color: #7A6435; }
+.ct .ct-promo-wrap { margin-top: 24px; }
+.pgrid > .ct-promo-slot { grid-column: 1 / -1; }
+.ct-rows > .ct-promo-slot { padding-block: 8px 10px; }
+.ct-rows > .ct-promo-slot.is-end { padding-block: 14px 0; }
+.ct-rows > .ct-promo-slot + .ct-row { border-top: 0; }
+
+/* секции режима «Все» */
+.ct-sec__head { display: flex; align-items: center; gap: 10px; }
+.ct-sec__ico { flex: none; width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: var(--sage); color: var(--green); }
+.ct-sec__title { flex: 1; min-width: 0; font-size: 22px; font-weight: 600; line-height: 1.15; letter-spacing: -.015em; }
+.ct .ct-sec__lead { margin-top: 8px; font-size: 14px; line-height: 1.4; color: var(--muted); text-wrap: balance; }
+.ct-sec__body { margin-top: 14px; }
+
+.ct .disclaimer { margin-top: 30px; }
+
+/* группы косметологии */
+.ct-group__head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
+.ct-group__head h3 { font-size: 20px; font-weight: 600; letter-spacing: -.01em; }
+.ct-group__head span { font-size: 13px; color: var(--muted); }
+
+/* строки */
+.ct-rows { display: grid; }
+.ct-row { position: relative; padding-block: 10px; }
+.ct-row + .ct-row { border-top: 1px solid var(--line); }
+.ct-row .pcard--row { grid-template-columns: 92px 1fr; }
+.ct-row .pcard--row .pcard__media { border-radius: 20px; }
+.ct-row .pcard--row .pcard__body { padding-right: 52px; }
+.ct-row .pcard__sub:empty { display: none; }
+.ct-row .pcard__add { display: none; }
+.ct-row .pcard--row .pcard__badge { display: block; top: 8px; left: 8px; line-height: 0; pointer-events: none; }
+.ct-row .pcard__badge .badge { height: 20px; padding: 0 8px; font-size: 11px; }
+.ct-nw { white-space: nowrap; }
+.ct-fmt { font-weight: 500; color: var(--ok); }
+.ct-row__add, .ct-row__more { position: absolute; right: 0; top: 50%; width: 40px; height: 40px; margin-top: -20px; border-radius: 50%; display: grid; place-items: center; }
+.ct-row__add { background: var(--ink); color: #fff; }
+.ct-row__add.is-in { background: var(--green); }
+.ct-row__more { background: var(--soft); color: var(--muted); }
+
+/* уточнения к цене */
+/* цена и уточнение — flex с переносом: при переносе левый край совпадает с ценой */
+.ct .ct-price { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+.ct .ct-price small { white-space: nowrap; }
+.ct-pill { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: var(--pill); background: var(--sand-soft); color: #7A6435; font-size: 12px; font-weight: 500; white-space: nowrap; }
+
+/* тест-подбор */
+.ct-quiz { display: grid; gap: 14px; justify-items: start; padding: 20px; border-radius: var(--r-card); background: var(--grad-deep); color: #fff; cursor: pointer; position: relative; overflow: hidden; isolation: isolate; }
+.ct-quiz::before { content: ""; position: absolute; z-index: -1; right: -60px; top: -70px; width: 200px; height: 200px; border-radius: 50%; background: radial-gradient(circle, rgba(200, 183, 138, .38) 0%, rgba(200, 183, 138, 0) 68%); }
+.ct-quiz__main h3 { font-size: 21px; font-weight: 600; letter-spacing: -.015em; line-height: 1.15; }
+.ct .ct-quiz__main p { margin-top: 6px; max-width: 280px; font-size: 14px; line-height: 1.4; color: rgba(255, 255, 255, .74); }
+
+/* пустой результат */
+.ct-empty .empty { padding-top: 24px; }
+.ct-empty .empty p { text-wrap: pretty; }
+.ct-empty__cta { display: grid; gap: 10px; width: 100%; margin-top: 14px; }
+.ct-empty__cta .btn { width: 100%; }

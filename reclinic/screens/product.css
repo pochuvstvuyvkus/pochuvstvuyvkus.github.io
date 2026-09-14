@@ -1,0 +1,169 @@
+/* Карточка продукта */
+
+/* --- медиаблок --- */
+.pd-top { padding-top: 4px; }
+.pd-media {
+  position: relative; overflow: hidden; isolation: isolate;
+  height: 292px; border-radius: 32px;
+  background: var(--tone-bg, var(--soft));
+}
+.pd-media::before {
+  content: ""; position: absolute; z-index: -1; left: 50%; top: 46%;
+  width: 300px; height: 300px; border-radius: 50%; transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(255, 255, 255, .62) 0%, rgba(255, 255, 255, 0) 66%);
+}
+.pd-media__illu { position: absolute; inset: 40px 34px 38px; }
+.pd-media__illu > svg { width: 100%; height: 100%; }
+.pd-media__bar { position: absolute; top: 14px; left: 16px; right: 14px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.pd-media__acts { display: flex; gap: 8px; }
+.pd-media .ibtn { width: 42px; height: 42px; background: rgba(255, 255, 255, .8); }
+.pd-media .ibtn.on { color: var(--bad); }
+.pd-media__tags { position: absolute; left: 14px; right: 14px; bottom: 14px; display: flex; flex-wrap: wrap; gap: 6px; }
+.pd-media__tags span { display: inline-flex; align-items: center; height: 28px; padding: 0 11px; border-radius: var(--pill); background: rgba(255, 255, 255, .72); font-size: 12px; font-weight: 500; color: var(--ink-2); white-space: nowrap; }
+
+/* --- заголовок и цена --- */
+.pd-head { padding-top: 20px; }
+.pd-kicker { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: var(--green); }
+.pd .pd-code { margin-top: 12px; font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+.pd .pd-kicker + .pd-title { margin-top: 8px; }
+.pd .pd-title { margin-top: 4px; font-size: 30px; font-weight: 600; line-height: 1.08; letter-spacing: -.025em; text-wrap: balance; }
+.pd .pd-sub { margin-top: 6px; font-size: 16px; line-height: 1.35; color: var(--muted); }
+
+.pd-price { margin-top: 18px; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.pd-price__main { min-width: 0; display: grid; gap: 6px; }
+.pd-price__main b { font-size: 32px; font-weight: 600; line-height: 1; letter-spacing: -.02em; }
+.pd-price__main b.is-text { font-size: 24px; letter-spacing: -.015em; }
+.pd-price__main small { font-size: 13px; line-height: 1.35; color: var(--muted); }
+.pd-price__main small.pd-price__gift {
+  justify-self: start; display: inline-flex; align-items: flex-start; gap: 7px;
+  margin-top: 4px; padding: 8px 13px 8px 10px; border-radius: 16px;
+  background: var(--sand-soft); color: #7A6435; font-size: 13px; line-height: 1.35;
+}
+.pd-price__gift .ico { flex: none; margin-top: 1px; color: var(--gold); }
+.pd-facts { margin-top: 18px; display: flex; gap: 6px; }
+.pd-fact { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 2px; padding: 13px 12px 12px; border-radius: 20px; background: var(--soft); }
+.pd-facts--3 .pd-fact { flex: 1 1 auto; padding: 13px 10px 12px 11px; }
+.pd-facts--3 .pd-fact small { font-size: 12px; }
+.pd-fact .ico { margin-bottom: 8px; color: var(--green); }
+.pd-fact b { font-size: 15px; font-weight: 600; line-height: 1.2; white-space: nowrap; }
+.pd-fact small { font-size: 13px; line-height: 1.25; color: var(--ink-2); opacity: .7; white-space: nowrap; }
+
+/* «оплатить сейчас — сдать позже»: сразу под фактами, рядом с ценой */
+.pd-head .pd-later { margin-top: 8px; }
+.pd-nw { white-space: nowrap; }
+.pd-buybar-cta.btn { flex: 1 1 auto; min-width: 0; padding: 0 18px; }
+
+.pd .pd-desc { margin-top: 18px; font-size: 15px; line-height: 1.52; color: var(--ink-2); }
+
+/* --- общие блоки --- */
+.pd-card { padding: 18px; border-radius: 24px; background: var(--soft); }
+.pd-card--sage { background: var(--sage); }
+
+.pd-checks { display: grid; gap: 12px; }
+.pd-checks li { display: flex; align-items: flex-start; gap: 12px; font-size: 15px; line-height: 1.4; color: var(--ink-2); }
+.pd-checks__i { flex: none; width: 24px; height: 24px; margin-top: -1px; border-radius: 50%; display: grid; place-items: center; background: var(--green); color: #fff; }
+
+.pd-steps { display: grid; }
+.pd-step { position: relative; display: grid; grid-template-columns: 34px 1fr; gap: 14px; padding-bottom: 18px; }
+.pd-step:last-child { padding-bottom: 0; }
+.pd-step::before { content: ""; position: absolute; left: 16px; top: 38px; bottom: 4px; width: 2px; border-radius: 1px; background: var(--line); }
+.pd-step:last-child::before { display: none; }
+.pd-step__n { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--ink); color: #fff; font-size: 14px; font-weight: 600; }
+.pd-step__main { min-width: 0; padding-top: 6px; }
+.pd-step__main b { display: block; font-size: 16px; font-weight: 500; line-height: 1.3; }
+.pd .pd-step__main p { margin-top: 3px; font-size: 14px; line-height: 1.42; color: var(--ink-2); opacity: .72; }
+
+.pd-faq .acc__body { white-space: pre-line; }
+
+.pd-no { display: grid; gap: 10px; }
+.pd-no li { display: flex; align-items: flex-start; gap: 12px; font-size: 15px; line-height: 1.4; color: var(--ink-2); }
+.pd-no__i { flex: none; width: 24px; height: 24px; margin-top: -1px; border-radius: 50%; display: grid; place-items: center; background: var(--soft-2); color: var(--muted); }
+.pd-no__main { min-width: 0; display: grid; justify-items: start; gap: 6px; }
+.pd-no__link { display: inline-flex; align-items: center; gap: 4px; height: 32px; padding: 0 10px 0 13px; border-radius: var(--pill); background: var(--sage); color: var(--deep); font-size: 13px; font-weight: 500; }
+.pd-no__link .ico { color: var(--green); }
+
+.pd-perks { display: grid; gap: 8px; }
+.pd-perk { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 22px; background: var(--sand-soft); }
+.pd-perk__i { flex: none; width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; background: #fff; color: var(--gold); }
+.pd-perk__main { min-width: 0; display: grid; gap: 2px; }
+.pd-perk__main b { font-size: 15px; font-weight: 500; line-height: 1.3; }
+.pd-perk__main small { font-size: 13px; line-height: 1.35; color: #7A6435; }
+
+/* --- IV: апселл курса --- */
+.pd-course {
+  position: relative; overflow: hidden; isolation: isolate; cursor: pointer;
+  padding: 20px 20px 18px; border-radius: var(--r-card);
+  background: var(--grad-deep); color: #fff;
+}
+.pd-course::before {
+  content: ""; position: absolute; z-index: -1; right: -80px; top: -90px;
+  width: 260px; height: 260px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(200, 183, 138, .4) 0%, rgba(200, 183, 138, 0) 68%);
+}
+.pd-course__top { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.pd-course__price { display: inline-flex; align-items: center; height: 28px; padding: 0 11px; border-radius: var(--pill); background: var(--sand); color: #3E3217; font-size: 12px; font-weight: 500; white-space: nowrap; }
+.pd-course__kicker { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 11px 0 9px; border-radius: var(--pill); background: rgba(255, 255, 255, .14); font-size: 12px; font-weight: 500; }
+.pd .pd-course__title { margin-top: 14px; max-width: 300px; font-size: 22px; font-weight: 600; line-height: 1.15; letter-spacing: -.015em; text-wrap: balance; }
+.pd .pd-course__text { margin-top: 8px; font-size: 14px; line-height: 1.42; color: rgba(255, 255, 255, .76); }
+.pd .pd-course__perk { margin-top: 14px; display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: 18px; background: rgba(255, 255, 255, .1); font-size: 14px; line-height: 1.35; }
+.pd-course__perk .ico { color: var(--sand); margin-top: 1px; }
+.pd-course .btn { margin-top: 16px; height: 50px; }
+
+/* --- чек-ап: что вы получите --- */
+.pd-gets { display: grid; gap: 8px; }
+.pd-get { display: flex; align-items: flex-start; gap: 14px; padding: 16px; border-radius: 24px; background: var(--soft); }
+.pd-get__i { flex: none; width: 46px; height: 46px; border-radius: 15px; display: grid; place-items: center; background: #fff; color: var(--green); }
+.pd-get__main { min-width: 0; display: grid; gap: 4px; padding-top: 1px; }
+.pd-get__main b { font-size: 16px; font-weight: 500; line-height: 1.28; }
+.pd .pd-get__main p { font-size: 14px; line-height: 1.42; color: var(--ink-2); opacity: .72; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* --- чек-ап: список анализов --- */
+.pd-an summary { gap: 10px; }
+.pd-an__t { flex: 1; min-width: 0; }
+.pd-an__n { flex: none; min-width: 30px; height: 26px; padding: 0 9px; border-radius: var(--pill); display: grid; place-items: center; background: #fff; font-size: 13px; font-weight: 600; color: var(--green); }
+.pd-an__items { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 16px 16px; }
+.pd-an__items span { display: inline-flex; align-items: center; min-height: 30px; padding: 5px 11px; border-radius: 12px; background: #fff; font-size: 13px; line-height: 1.3; color: var(--ink-2); }
+
+.pd-later { display: flex; align-items: center; gap: 14px; padding: 16px 18px; border-radius: 24px; background: var(--grad-sand); }
+.pd-later__i { flex: none; width: 46px; height: 46px; border-radius: 15px; display: grid; place-items: center; background: #fff; color: var(--gold); }
+.pd-later__main { min-width: 0; display: grid; gap: 3px; }
+.pd-later__main b { font-size: 16px; font-weight: 500; line-height: 1.28; }
+.pd-later__main small { font-size: 13px; line-height: 1.35; color: #7A6435; }
+
+/* --- консультации --- */
+.pd-whom-tabs { display: flex; gap: 8px; }
+.pd .pd-whom__lead { margin-bottom: 14px; font-size: 17px; font-weight: 600; line-height: 1.25; letter-spacing: -.01em; color: var(--deep); text-wrap: balance; }
+.pd .pd-whom__outro { margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(73, 114, 89, .16); font-size: 14px; line-height: 1.42; color: var(--deep); }
+.pd-row-price { font-size: 15px; font-weight: 600; color: var(--ink); white-space: nowrap; }
+/* специалисты: имя и подпись «профиль · стаж» — по одной строке, ряды одной высоты */
+.pd-team .lrow__main b, .pd-team .lrow__main small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* --- ленты внутри карточки: отступ слева при scroll-snap --- */
+.pd .rail { scroll-padding-inline: 20px; }
+
+/* --- программы --- */
+.pd-prog { display: grid; gap: 16px; padding: 20px; border-radius: var(--r-card); background: var(--sand-soft); }
+.pd-prog__title { font-size: 20px; font-weight: 600; letter-spacing: -.015em; }
+.pd-prog__text { font-size: 15px; line-height: 1.45; color: var(--ink-2); }
+.pd-prog__list { display: grid; gap: 12px; }
+.pd-prog__list li { display: flex; align-items: flex-start; gap: 12px; }
+.pd-prog__list li > span:last-child { min-width: 0; display: grid; gap: 2px; }
+.pd-prog__list b { font-size: 15px; font-weight: 500; line-height: 1.3; }
+.pd-prog__list small { font-size: 13px; line-height: 1.35; color: var(--muted); }
+.pd-prog__i { flex: none; width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; background: #fff; color: var(--gold); }
+
+/* --- низ --- */
+.pd .disclaimer { margin-top: 28px; }
+
+/* --- нижняя панель --- */
+.pd-buy { flex: 1; min-width: 0; display: flex; gap: 10px; }
+.pd-buy .btn { flex: 1; min-width: 0; padding: 0 16px; }
+.pd-buy .ibtn { width: 54px; height: 54px; border-radius: var(--r-btn); background: var(--soft); }
+.pd-buy .ibtn .ibtn__badge { top: 7px; right: 7px; min-width: 17px; height: 17px; padding: 0; border-width: 2px; border-color: var(--soft); font-size: 12px; line-height: 1; }
+/* уже в корзине — одинаково для всех категорий: тёмная кнопка, корзина с зелёной галочкой (как бейдж таббара) */
+.pd-incart { position: relative; flex: none; display: grid; place-items: center; }
+.pd-incart__ok { position: absolute; top: -6px; right: -7px; width: 17px; height: 17px; border-radius: 50%; display: grid; place-items: center; background: var(--green); color: #fff; box-shadow: 0 0 0 2px var(--ink); }
+.pd-incart__ok .ico { stroke-width: 2.6; }
+.pd-buy .ibtn.pd-incart-ibtn { background: var(--ink); color: #fff; }
+.pd-incart-btn.btn { gap: 10px; padding: 0 16px 0 18px; }
+.pd-incart-btn .ico:last-child { opacity: .6; }

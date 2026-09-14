@@ -66,6 +66,9 @@
 .ct-row .pcard__add { display: none; }
 .ct-row .pcard--row .pcard__badge { display: block; top: 8px; left: 8px; line-height: 0; pointer-events: none; }
 .ct-row .pcard__badge .badge { height: 20px; padding: 0 8px; font-size: 11px; }
+/* вырез врача в миниатюре: крупно, по пояс — фигура вырастает из нижнего края плитки, лицо читается */
+.ct-row .pcard__illu > .rc-photo--cutout { position: absolute; top: -2%; left: 50%; right: auto; bottom: auto; width: 132%; height: auto; max-width: none; transform: translateX(-50%); }
+.ct-row .pcard__media:has(.rc-photo--cutout) { background: linear-gradient(180deg, #F4F4F0 0%, var(--tone-bg, var(--soft)) 100%); }
 .ct-nw { white-space: nowrap; }
 .ct-fmt { font-weight: 500; color: var(--ok); }
 .ct-row__add, .ct-row__more { position: absolute; right: 0; top: 50%; width: 40px; height: 40px; margin-top: -20px; border-radius: 50%; display: grid; place-items: center; }

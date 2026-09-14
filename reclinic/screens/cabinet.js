@@ -592,7 +592,11 @@
     const b = params.review === 'new' ? null : reviewBooking(demo);
     /* формат разбора — свойство продукта-консультации */
     const fmt = b ? bookingPlace(b) : consult ? RC.formatLabel(consult).toLowerCase() : 'онлайн';
-    const illu = `<div class="cb-cta__illu">${RC.illu('consult-online', { tone: { bg: 'transparent', accent: '#C8B78A', accent2: '#EFF1EC' } })}</div>`;
+    // специалист с сайта (PNG-вырез) вместо иллюстрации — как в hero главной; нет фото — прежняя иллюстрация
+    const photo = consult && RC.photoFor ? RC.photoFor(consult) : null;
+    const illu = photo && /\.png$/i.test(photo)
+      ? `<div class="cb-cta__photo" aria-hidden="true"><img src="${esc(photo)}" alt=""></div>`
+      : `<div class="cb-cta__illu">${RC.illu('consult-online', { tone: { bg: 'transparent', accent: '#C8B78A', accent2: '#EFF1EC' } })}</div>`;
     if (b) {
       return `<article class="cb-cta cb-cta--booked">
         <span class="cb-kick">${I('check', 14)}Входит в чек-ап</span>

@@ -34,6 +34,16 @@
   };
   const programIllu = (p) => (PROGRAM_ILLU[p.id] ? RC.illu(PROGRAM_ILLU[p.id], { tone: RC.tone(p) }) : RC.productIllu(p));
 
+  /** Фото программы с сайта (RC.photoFor) — фоном справа под зелёным градиентом.
+      Точка кадрирования — по файлу, чтобы в узкой вертикальной зоне оставались лицо или талия. */
+  const PHOTO_POS = { 'hero/08': '62% 50%', 'hero/09': '58% 40%', 'hero/10': '72% 34%', 'hero/11': '66% 36%', 'hero/06': '46% 14%', 'hero/03': '50% 20%', 'clinic/05': '38% 26%', 'clinic/03': '52% 30%' };
+  const photoPos = (src) => { const k = Object.keys(PHOTO_POS).find((x) => String(src).includes(x)); return k ? PHOTO_POS[k] : '50% 30%'; };
+  const programPhoto = (p, cls) => {
+    const src = p && RC.photoFor ? RC.photoFor(p) : null;
+    if (!src || /\.png$/i.test(src)) return '';
+    return `<div class="${cls}" aria-hidden="true"><img src="${esc(src)}" alt="" style="object-position:${photoPos(src)}"></div>`;
+  };
+
   /** Дисклеймер со своим отступом: общее `.app p {margin:0}` перебивает margin-top у .disclaimer. */
   const disclaimer = (ui, text) => `<div class="pg-disc">${ui.disclaimer(text)}</div>`;
 
@@ -265,13 +275,15 @@
   function hero(p) {
     const kicker = ['Программа', p.duration && p.duration.length <= 14 ? p.duration : null, RC.formatLabel(p)].filter(Boolean).join(' · ');
     const facts = factsFor(p);
-    return `<article class="pg-hero">
+    const photo = programPhoto(p, 'pg-hero__photo');
+    return `<article class="pg-hero${photo ? ' pg-hero--photo' : ''}">
+      ${photo}
       <div class="pg-hero__body">
         <span class="pg-kicker">${I(formatIcon(p), 14)}${esc(kicker)}</span>
         <h1 class="pg-hero__title">${esc(p.title)}</h1>
         <p class="pg-hero__short">${esc(p.short || p.subtitle || '')}</p>
       </div>
-      <div class="pg-hero__illu" data-kind="${esc(PROGRAM_ILLU[p.id] || RC.illuKind(p))}">${programIllu(p)}</div>
+      ${photo ? '' : `<div class="pg-hero__illu" data-kind="${esc(PROGRAM_ILLU[p.id] || RC.illuKind(p))}">${programIllu(p)}</div>`}
       <div class="pg-facts pg-facts--${facts.length}">${facts.map(([v, l]) => `<div class="pg-fact"><b>${esc(v)}</b><small>${esc(l)}</small></div>`).join('')}</div>
     </article>`;
   }
@@ -656,14 +668,16 @@
         : a.symptoms.length ? [`${a.symptoms.length} ${RC.plural(a.symptoms.length, 'симптом', 'симптома', 'симптомов')}`] : []);
 
     const fits = prog && (prog.goals || []).includes(goal.id);
-    const progCard = prog ? `<article class="pg-match" ${RC.link('program', { id: prog.id })}>
+    const matchPhoto = prog ? programPhoto(prog, 'pg-match__photo') : '';
+    const progCard = prog ? `<article class="pg-match${matchPhoto ? ' pg-match--photo' : ''}" ${RC.link('program', { id: prog.id })}>
+        ${matchPhoto}
         <div class="pg-match__body">
           <span class="pg-kicker">${I(fits ? 'check' : 'sparkles', 14)}${fits ? 'Подходит под вашу цель' : 'Рекомендуем для старта'}</span>
           <h3 class="pg-match__title">${esc(prog.title)}</h3>
           <p class="pg-match__short">${esc(prog.short || '')}</p>
           <span class="pg-match__fmt">${I(formatIcon(prog), 14)}${esc(RC.formatLabel(prog))}</span>
         </div>
-        <div class="pg-match__illu">${programIllu(prog)}</div>
+        ${matchPhoto ? '' : `<div class="pg-match__illu">${programIllu(prog)}</div>`}
         <div class="pg-match__foot">
           <span class="pg-match__price">${esc(prog.price == null ? 'Цена после подбора' : RC.priceLabel(prog))}</span>
           ${ui.btn('О программе', { variant: 'white', size: 'sm', iconRight: 'arrowR' })}

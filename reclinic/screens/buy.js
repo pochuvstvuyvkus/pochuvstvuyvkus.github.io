@@ -538,6 +538,11 @@
     const p = RC.product(DIAG_ID);
     if (!p) return '';
     const br = RC.branch((p.branchIds || [])[0]);
+    // врач с сайта (PNG-вырез) вместо иллюстрации; нет фото — прежняя иллюстрация
+    const photo = RC.photoFor ? RC.photoFor(p) : null;
+    const illu = photo && /\.png$/i.test(photo)
+      ? `<div class="bk-upsell__photo" aria-hidden="true"><img src="${esc(photo)}" alt=""></div>`
+      : `<div class="bk-upsell__illu">${RC.illu('consult-offline', { tone: RC.TONES.sand })}</div>`;
     return `<section class="pad mt-16">
       <article class="bk-upsell">
         <span class="bk-upsell__kicker">${I('stetho', 14)}Приём врача${p.duration ? ' · ' + esc(p.duration) : ''}</span>
@@ -546,7 +551,7 @@
             <b ${RC.link('product', { id: p.id })}>Диагностическая консультация</b>
             <small>Врач подберёт капельницы под ваши цели и проведёт анализ состава тела${br ? `. Приём — на${NB}${esc(branchShort(br).replace(/ая$/, 'ой'))}` : ''}</small>
           </div>
-          <div class="bk-upsell__illu">${RC.illu('consult-offline', { tone: RC.TONES.sand })}</div>
+          ${illu}
         </div>
         <div class="bk-upsell__foot">
           <span class="bk-upsell__price"><b class="num">${RC.priceLabel(p)}</b><em>По прайсу клиники бесплатна при покупке курса капельниц</em></span>

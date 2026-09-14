@@ -287,7 +287,7 @@
 
   RC.productIllu = (p, variant) => {
     const photo = RC.photoFor(p);
-    if (photo) return `<img class="rc-photo rc-photo--${photoFit(p, photo)}" src="${esc(photo)}" alt="${esc(p.title)}" decoding="async">`;
+    if (photo) return `<img class="rc-photo rc-photo--${photoFit(p, photo)}" src="${esc(photo)}" alt="${esc(p.title)}">`;
     const kind = RC.illuKind(p);
     const label = p && p.category === 'iv' ? RC.ivLabel(p) : kind === 'iv' ? 'КУРС' : undefined;
     return RC.illu(kind, { tone: RC.tone(p), label, variant: variant || 0 });
@@ -359,7 +359,7 @@
   /** Аватар: o.photo — путь к фото, o.name — имя специалиста (фото подтянется с сайта). */
   ui.avatar = (initials, o = {}) => {
     const photo = o.photo || (o.name ? RC.teamPhoto(o.name) : null);
-    return `<span class="avatar${photo ? ' avatar--photo' : ''}" style="--s:${o.size || 52}px">${photo ? `<img src="${esc(photo)}" alt="" decoding="async">` : esc(initials)}${o.tg ? `<span class="avatar__tg">${I('telegram', 11)}</span>` : ''}</span>`;
+    return `<span class="avatar${photo ? ' avatar--photo' : ''}" style="--s:${o.size || 52}px">${photo ? `<img src="${esc(photo)}" alt="">` : esc(initials)}${o.tg ? `<span class="avatar__tg">${I('telegram', 11)}</span>` : ''}</span>`;
   };
 
   ui.productCard = (p, ctx, o = {}) => {

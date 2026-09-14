@@ -30,7 +30,7 @@
       <h2 class="hero__title">${esc(HERO.title)}</h2>
       <p class="hero__meta">${esc(HERO.meta)}</p>
       ${photo
-        ? `<div class="hero__photo"><img src="${esc(photo)}" alt="" decoding="async"></div>`
+        ? `<div class="hero__photo"><img src="${esc(photo)}" alt=""></div>`
         : `<div class="hero__illu">${RC.illu(HERO.illu, { tone: { bg: 'transparent', accent: '#C8B78A', accent2: '#EFF1EC' } })}</div>`}
       <div class="hero__foot">
         <div class="hero__price num">${RC.priceLabel(p)}<small>${esc(HERO.priceNote)}</small></div>

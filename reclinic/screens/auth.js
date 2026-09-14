@@ -30,7 +30,7 @@
     note: 'Первое, что видит клиент после нажатия «Открыть» в боте. Mini App сам получает подтверждённый аккаунт Telegram — ни логина, ни пароля, ни формы регистрации. Бизнес не теряет клиентов на входе, а клиент сразу видит премиальный бренд клиники.',
     points: [
       'Вход без паролей и SMS — аккаунт уже подтверждён Telegram',
-      'Фирменный вордмарк и цвета клиники с первого кадра',
+      'Логотип клиники и фото основателей с первого кадра',
       'Понятный статус загрузки вместо пустого экрана',
       'Длится доли секунды, затем открывается приветствие',
       'В прототипе — тап по экрану ведёт дальше',
@@ -40,17 +40,24 @@
       const { data } = ctx;
       const clinic = data.clinic || {};
       const since = clinic.foundedYear ? `с ${clinic.foundedYear} года` : '';
-      return `<div class="au-splash" ${RC.linkRoot('welcome')}>
-        <div class="au-splash__glow" aria-hidden="true"></div>
-        <div class="au-splash__center">
-          <div class="au-halo">
+      // логотип и фото основателей с сайта; без картинок — прежние вордмарк и иллюстрация
+      const logo = RC.image ? RC.image('logo') : null;
+      const photo = RC.image ? RC.image('hero:1') : null;
+      const halo = `<div class="au-halo">
             <span class="au-halo__ring au-halo__ring--2"></span>
             <span class="au-halo__ring"></span>
             <div class="au-halo__disc">
               <div class="au-halo__illu">${RC.illu('telegram-login', { tone: RC.TONES.sage })}</div>
             </div>
-          </div>
-          <h1 class="au-mark">Re<i>:</i>clinic</h1>
+          </div>`;
+      return `<div class="au-splash${photo ? ' au-splash--photo' : ''}" ${RC.linkRoot('welcome')}>
+        ${photo ? `<div class="au-splash__photo" aria-hidden="true"><img src="${esc(photo)}" alt=""></div>` : ''}
+        <div class="au-splash__glow" aria-hidden="true"></div>
+        <div class="au-splash__center">
+          ${photo ? '' : halo}
+          ${logo
+            ? `<h1 class="au-logo"><img src="${esc(logo)}" alt="Re:clinic"></h1>`
+            : '<h1 class="au-mark">Re<i>:</i>clinic</h1>'}
           <p class="au-tagline">клиника превентивной медицины и&nbsp;биохакинга</p>
           ${since ? `<div class="au-splash__meta"><span>${esc(since)}</span><i></i><span>Москва и онлайн</span></div>` : ''}
         </div>
@@ -175,8 +182,10 @@
     render(ctx) {
       const { ui, state } = ctx;
       const consent = authOf(state).consent === true;
+      const logo = RC.image ? RC.image('logo') : null;
       return `<div class="au-wel">
         <header class="au-wel__head">
+          ${logo ? `<img class="au-wel__logo" src="${esc(logo)}" alt="Re:clinic">` : ''}
           <h1 class="au-wel__title">Мы узнали вас по&nbsp;Telegram</h1>
           <p class="au-wel__sub">Проверьте данные — и можно выбирать услуги</p>
         </header>

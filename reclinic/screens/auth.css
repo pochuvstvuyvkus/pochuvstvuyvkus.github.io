@@ -49,9 +49,25 @@
 .au-status__txt small { font-size: 14px; line-height: 1.35; color: rgba(255, 255, 255, .7); }
 @keyframes au-spin { to { transform: rotate(360deg); } }
 
+/* фото основателей под тёмно-зелёным затемнением + логотип сайта светлым */
+.au-splash--photo { background: #2B4A34; }
+.au-splash__photo { position: absolute; z-index: -2; top: 0; left: 0; right: 0; height: 76%; pointer-events: none; }
+.au-splash__photo img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 55% 18%; filter: saturate(.82); }
+.au-splash--photo .au-splash__glow {
+  background:
+    linear-gradient(180deg, rgba(43, 74, 52, .66) 0%, rgba(43, 74, 52, .2) 20%, rgba(43, 74, 52, .16) 38%, rgba(43, 74, 52, .78) 60%, #2B4A34 76%),
+    radial-gradient(420px 260px at 50% 78%, rgba(200, 183, 138, .14) 0%, rgba(200, 183, 138, 0) 70%),
+    linear-gradient(180deg, rgba(43, 74, 52, 0) 80%, rgba(24, 43, 30, .5) 100%);
+}
+.au-splash--photo .au-splash__center { justify-content: flex-end; padding-bottom: 30px; }
+.au-logo { margin: 0; line-height: 0; }
+.au-logo img { display: block; width: 236px; height: auto; margin-left: -10px; filter: brightness(0) invert(1); }
+.au-splash .au-logo + .au-tagline { margin-top: 14px; }
+
 /* ============================== welcome ============================== */
 
 .au-wel__head { padding: 4px 20px 16px; }
+.au-wel__logo { display: block; width: 112px; height: auto; margin: 0 0 14px -5px; }
 .au-wel .sec { margin-top: 26px; }
 .au-wel .au-wel__title { font-size: 30px; font-weight: 600; line-height: 1.08; letter-spacing: -.025em; text-wrap: balance; }
 .au-wel .au-wel__sub { margin-top: 6px; font-size: 14px; color: var(--muted); }

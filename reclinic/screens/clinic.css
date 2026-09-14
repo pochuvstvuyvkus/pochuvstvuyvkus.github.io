@@ -28,6 +28,9 @@
 .cl-ava--sm { width: 38px; height: 38px; font-size: 13px; background: #fff; color: var(--green); }
 .cl-ava--lg { width: 64px; height: 64px; font-size: 21px; }
 .cl-ava--xl { width: 76px; height: 76px; font-size: 25px; }
+/* фото специалиста в том же круге */
+.cl-ava--photo { overflow: hidden; background: var(--soft); }
+.cl-ava--photo > img { display: block; width: 100%; height: 100%; border-radius: inherit; object-fit: cover; object-position: 50% 18%; }
 
 /* ============================ До / После ============================ */
 
@@ -35,41 +38,34 @@
 
 .cl-ba-rail { gap: 12px; scroll-padding-inline: 20px; }
 .cl-ba { width: 272px; display: grid; align-content: start; gap: 10px; cursor: pointer; }
-.cl-ba__media { position: relative; height: 208px; border-radius: 26px; overflow: hidden; background: var(--soft); transition: height .25s ease; }
-.cl-ba__media > svg { position: absolute; inset: 0; }
-.cl-ba__media--big { height: 220px; border-radius: 28px; }
-.cl-ba__lbl {
-  position: absolute; top: 12px; height: 26px; padding: 0 11px; border-radius: var(--pill);
-  display: inline-flex; align-items: center; font-size: 12px; font-weight: 500;
-  background: rgba(255, 255, 255, .82); color: var(--ink-2); backdrop-filter: blur(6px);
-}
-.cl-ba__lbl--l { left: 12px; }
-.cl-ba__lbl--r { right: 12px; background: var(--ink); color: #fff; }
-.cl-ba__note {
-  position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%);
-  max-width: calc(100% - 24px); display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px 0 10px; border-radius: var(--pill);
-  background: rgba(255, 255, 255, .86); backdrop-filter: blur(6px);
-  font-size: 12px; font-weight: 500; color: var(--ink-2); white-space: nowrap;
-}
-.cl-ba__note > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.cl-ba__note .ico { color: var(--green); }
+/* коллаж с сайта квадратный, подписи «до/после» и срок уже внутри — показываем целиком.
+   Белый фон коллажа растворяется в мягкой подложке (multiply), карточка выглядит как остальные. */
+.cl-ba__media { position: relative; isolation: isolate; aspect-ratio: 1 / 1; border-radius: 26px; overflow: hidden; background: var(--soft); }
+.cl-ba__media > img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; }
+.cl-ba__empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted-2); }
+.cl-ba__media--big { aspect-ratio: auto; height: 330px; border-radius: 28px; transition: height .25s ease; }
 .cl-ba__body { display: grid; gap: 3px; padding-inline: 4px; }
 .cl-ba__body b { font-size: 16px; font-weight: 600; line-height: 1.25; letter-spacing: -.01em; }
 .cl-ba__body small { font-size: 13px; color: var(--muted); }
 
 /* плитка «вся галерея» в конце ленты */
-.cl-ba.cl-ba--all { width: 176px; text-align: left; }
-.cl-ba__all { display: grid; grid-template-rows: 1fr auto; gap: 10px; padding: 10px; background: var(--sage); }
-.cl-ba__mosaic { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; min-height: 0; }
-.cl-ba__mosaic > span { position: relative; overflow: hidden; border-radius: 14px; }
-.cl-ba__mosaic > span > svg { position: absolute; inset: 0; }
-.cl-ba__allbtn { display: flex; align-items: center; justify-content: center; gap: 6px; height: 40px; border-radius: 14px; background: var(--ink); color: #fff; }
+.cl-ba.cl-ba--all { width: 212px; text-align: left; }
+.cl-ba__media.cl-ba__all { aspect-ratio: auto; height: 272px; display: grid; grid-template-rows: auto 1fr; align-items: end; gap: 10px; padding: 10px; background: var(--sage); }
+.cl-ba__mosaic { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; align-self: start; }
+.cl-ba__mosaic > span { position: relative; aspect-ratio: 1 / 1; overflow: hidden; border-radius: 14px; background: #fff; }
+/* в маленькой плитке оставляем только пару снимков (≈19–89% высоты коллажа): без плашки срока и подписей, которые не читаются в 90px */
+.cl-ba__mosaic > span > img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; transform: scale(1.42) translateY(-3%); }
+.cl-ba__allbtn { display: flex; align-items: center; justify-content: center; gap: 6px; height: 44px; border-radius: 14px; background: var(--ink); color: #fff; }
 .cl-ba__allbtn b { font-size: 14px; font-weight: 500; }
 
 .cl-rv-list { display: grid; gap: 12px; }
 .cl-rv { display: grid; gap: 10px; padding: 18px 18px 16px; border-radius: 26px; background: var(--soft); }
 .cl-rv__top { display: flex; flex-wrap: wrap; gap: 6px; }
 .cl-rv__top .tag { height: 26px; padding: 0 10px; font-size: 12px; }
+/* тег «Фото до/после» с миниатюрой снимка «после» — открывает шторку фото */
+.cl-rv__ph { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 7px 0 3px; border-radius: var(--pill); background: var(--sand-soft); color: #7A6435; font-size: 12px; font-weight: 500; }
+.cl-rv__ph .ico { color: var(--gold); }
+.cl-rv__thumb { flex: none; width: 20px; height: 20px; border-radius: 50%; background: #fff no-repeat 94% 57% / 220%; box-shadow: 0 0 0 1px rgba(122, 100, 53, .14); }
 .cl-rv__res { font-size: 21px; font-weight: 600; line-height: 1.18; letter-spacing: -.018em; color: var(--deep); text-wrap: balance; }
 .cl-rv__metric { display: flex; align-items: flex-start; gap: 7px; padding: 9px 12px; border-radius: 14px; background: #fff; font-size: 14px; line-height: 1.35; font-weight: 500; color: var(--ink-2); }
 .cl-rv__metric .ico { color: var(--green); margin-top: 1px; }
@@ -123,11 +119,8 @@
   display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden;
 }
 .cl-ph:not(.is-open) .cl-fade { display: none; }
-.cl-ph.is-open .cl-ba__media--big { height: 150px; }
-.cl-ph.is-open .cl-spark { display: none; }
-/* в сжатом медиа плашка ложится на композицию — прячем её, подпись о согласии остаётся в ленте и галерее */
-.cl-ba__note { transition: opacity .2s ease; }
-.cl-ph.is-open .cl-ba__note { opacity: 0; visibility: hidden; }
+/* при раскрытом тексте коллаж уменьшается, но остаётся целым (contain) */
+.cl-ph.is-open .cl-ba__media--big { height: 180px; }
 .cl-ph.is-open .cl-ph__body { max-height: 232px; overflow-y: auto; scrollbar-width: none; }
 .cl-ph.is-open .cl-ph__body::-webkit-scrollbar { display: none; }
 .cl-ph.is-open .cl-ph__text { display: block; overflow: visible; }
@@ -143,12 +136,7 @@
 .cl-gal__scroll::-webkit-scrollbar { display: none; }
 .cl-gal__scroll > .cl-fade { margin: -36px -20px 0; }
 .cl-gal__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.cl-ba__media--mini { height: 128px; border-radius: 18px; }
-.cl-ba__media--mini .cl-ba__lbl { top: 8px; height: 20px; padding: 0 8px; font-size: 11px; }
-.cl-ba__media--mini .cl-ba__lbl--l { left: 8px; }
-.cl-ba__media--mini .cl-ba__lbl--r { right: 8px; }
-.cl-gal__note { display: flex; align-items: center; justify-content: center; gap: 7px; font-size: 13px; color: var(--muted); }
-.cl-gal__note .ico { color: var(--green); }
+.cl-ba__media--mini { border-radius: 20px; }
 
 /* ============================ Команда ============================ */
 
@@ -203,11 +191,24 @@
 .cl-help__alt > .ico:first-child { flex: none; color: var(--green); }
 .cl-help__alt span { flex: 1; min-width: 0; }
 .cl-help__alt-go { flex: none; color: var(--muted); }
+/* шапка карточки с фото врача: заголовок слева, вырез врача справа, прижат к низу шапки */
+.cl-help__head { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 112px; align-items: end; gap: 8px; margin: -12px -8px 0 0; }
+.cl-help__lead { display: grid; justify-items: start; gap: 10px; padding-bottom: 6px; }
+.cl-help__lead .cl-help__kick { margin: 0; }
+.cl-help__lead .cl-help__title { max-width: none; }
+.cl-help__cut { display: block; width: 112px; height: 164px; object-fit: contain; object-position: 50% 100%; }
+.cl-help__head + .cl-help__text { margin-top: 4px; }
+/* запасной вариант — обычное фото вместо выреза */
+.cl-help__head--photo { margin: 0; align-items: center; }
+.cl-help__head--photo .cl-help__lead { padding-top: 0; }
+.cl-help__head--photo .cl-help__cut { height: 104px; border-radius: 24px; object-fit: cover; }
 
 /* шторка специалиста: шапка компактная, прокрутка ограничена — верх шторки не заходит на шапку Telegram */
 .cl-ms { position: relative; }
 .cl-ms__close { position: absolute; top: -6px; right: 0; }
 .cl-ms__head { display: flex; align-items: center; gap: 16px; padding-right: 36px; }
+.cl-ms__portrait { flex: none; width: 104px; height: 120px; border-radius: 26px; overflow: hidden; background: var(--soft); }
+.cl-ms__portrait > img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 18%; }
 .cl-ms__who { min-width: 0; display: grid; gap: 4px; }
 .cl-ms__who h3 { font-size: 21px; font-weight: 600; line-height: 1.15; letter-spacing: -.015em; text-wrap: balance; }
 .cl-ms__who p { font-size: 14px; line-height: 1.3; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -249,6 +250,8 @@
 .cl-br__cta { display: flex; gap: 10px; margin-top: 16px; }
 .cl-br__cta .btn--primary { flex: 1; }
 .cl-br__cta .btn--soft { padding: 0 24px; }
+.cl-br__photo { position: relative; height: 196px; margin: 16px 0 0; border-radius: 26px; overflow: hidden; background: var(--soft); }
+.cl-br__photo > img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .cl-note { display: flex; gap: 12px; margin-top: 14px; padding: 14px 16px; border-radius: 20px; background: var(--sand-soft); }
 .cl-note .ico { flex: none; color: var(--gold); }
 .cl-note p { font-size: 14px; line-height: 1.42; color: #5E4E2A; }

@@ -637,11 +637,15 @@
     const later = p.category === 'checkups' && p.price && hasLabs;
     const ps = priceSub(p);
     const desc = description(p);
+    // фото с сайта: пакет капельницы (квадратный кроп), вырез врача (прозрачный PNG), обложка — у каждого своя посадка
+    const media = RC.productIllu(p);
+    const fit = (String(media).match(/rc-photo--(\w+)/) || [])[1];
+    const mediaCls = !fit ? '' : ` pd-media--photo pd-media--${p.category === 'iv' && fit === 'cover' ? 'pack' : fit}`;
 
     return `
       <section class="pad pd-top">
-        <div class="pd-media" style="${RC.toneStyle(tone)}">
-          <div class="pd-media__illu">${RC.productIllu(p)}</div>
+        <div class="pd-media${mediaCls}" style="${RC.toneStyle(tone)}">
+          <div class="pd-media__illu">${media}</div>
           <div class="pd-media__bar">
             <span>${p.badge ? ui.badge(p.badge) : ''}</span>
             <span class="pd-media__acts">

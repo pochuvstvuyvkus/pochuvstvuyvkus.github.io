@@ -29,6 +29,24 @@
 .pg-fact b { display: block; font-size: 15px; font-weight: 600; line-height: 1.15; letter-spacing: -.01em; }
 .pg-fact small { display: block; margin-top: 4px; font-size: 12px; line-height: 1.25; color: rgba(255, 255, 255, .9); }
 
+/* hero с фото с сайта: кадр справа, слева и снизу — фирменный зелёный градиент под текст и плитки */
+.pg-hero--photo { background: #3F6650; }
+.pg-hero--photo::before { display: none; }
+.pg-hero__photo, .pg-match__photo { position: absolute; z-index: -1; top: 0; right: 0; bottom: 0; width: 70%; pointer-events: none; }
+.pg-hero__photo img, .pg-match__photo img { display: block; width: 100%; height: 100%; object-fit: cover; filter: saturate(.88); }
+.pg-hero__photo::after, .pg-match__photo::after {
+  content: ""; position: absolute; inset: 0;
+  background:
+    linear-gradient(90deg, #3F6650 0%, rgba(63, 102, 80, .9) 18%, rgba(63, 102, 80, .42) 52%, rgba(63, 102, 80, .08) 100%),
+    linear-gradient(0deg, rgba(38, 64, 47, .78) 0%, rgba(38, 64, 47, 0) 46%),
+    linear-gradient(180deg, rgba(38, 64, 47, .32) 0%, rgba(38, 64, 47, 0) 24%);
+}
+.pg-hero--photo .pg-hero__title, .pg-hero--photo .pg-hero__short,
+.pg-match--photo .pg-match__title, .pg-match--photo .pg-match__short, .pg-match--photo .pg-match__fmt { text-shadow: 0 1px 16px rgba(22, 40, 28, .45); }
+.pg-hero--photo .pg-kicker, .pg-match--photo .pg-kicker { background: rgba(33, 58, 41, .42); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.pg-hero--photo .pg-hero__body { min-height: 214px; }
+.pg-hero--photo .pg-fact { background: rgba(22, 40, 28, .3); }
+
 /* ---------- как устроена ---------- */
 .pg-steps { position: relative; display: grid; gap: 0; }
 .pg-step { position: relative; display: grid; grid-template-columns: 36px 1fr; gap: 14px; padding-bottom: 18px; }
@@ -73,6 +91,10 @@
 .pg-consult__top { display: flex; align-items: center; gap: 14px; }
 .pg-consult__illu { position: relative; flex: none; width: 76px; height: 76px; border-radius: 18px; overflow: hidden; background: var(--tone-bg, var(--soft)); }
 .pg-consult__illu > svg { position: absolute; inset: 6%; width: 88% !important; height: 88% !important; }
+/* фото в миниатюрах: обложка — на всю плитку; вырез врача — крупно, по пояс, фигура растёт из нижнего края */
+.pg-consult__illu > .rc-photo, .pg-first__illu > .rc-photo { position: absolute; inset: 0; }
+.pg-consult__illu > .rc-photo--cutout, .pg-first__illu > .rc-photo--cutout { top: -2%; left: 50%; right: auto; bottom: auto; width: 132%; height: auto; max-width: none; transform: translateX(-50%); }
+.pg-consult__illu:has(.rc-photo--cutout), .pg-first__illu:has(.rc-photo--cutout) { background: linear-gradient(180deg, #F4F4F0 0%, var(--tone-bg, var(--soft)) 100%); }
 .pg-consult__main { min-width: 0; display: grid; gap: 3px; }
 .pg-consult__label { font-size: 12px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--gold); }
 .pg-consult__main b { font-size: 16px; font-weight: 500; line-height: 1.2; }
@@ -156,6 +178,9 @@
 /* формат программы — свойство продукта; в теле карточки, т. к. рядом с кнопкой «Онлайн или в клинике» переносилось */
 .pg-match__fmt { margin-top: 12px; display: flex; align-items: center; gap: 6px; max-width: 176px; font-size: 13px; font-weight: 500; line-height: 1.25; white-space: nowrap; color: #fff; }
 .pg-match .btn--sm { height: 44px; padding: 0 16px; }
+.pg-match--photo { background: #3F6650; }
+.pg-match--photo::before { display: none; }
+.pg-match__photo { width: 64%; }
 
 .pg-first { padding: 16px; border-radius: 28px; background: #fff; box-shadow: inset 0 0 0 1.5px var(--line); }
 .app .pg-first__why { display: flex; gap: 8px; padding: 10px 12px; border-radius: 16px; background: var(--sage); font-size: 14px; line-height: 1.38; color: var(--deep); }

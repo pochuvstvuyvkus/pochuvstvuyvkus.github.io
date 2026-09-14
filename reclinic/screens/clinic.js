@@ -511,7 +511,27 @@
   /** Текст карточки «Не знаете, к кому записаться?» — своё предложение, без склейки title + short. */
   const DIAG_TEAM = 'Врач проведёт приём и анализ состава тела и подберёт специалиста под вашу цель';
 
-  const ava = (m, cls = '') => `<span class="cl-ava cl-ava--${esc(m.group)}${cls ? ' ' + cls : ''}">${esc(initials(shortName(m)))}</span>`;
+  /** Аватар специалиста: фото с сайта в круге, без фото — инициалы. Клиентам (авторам отзывов) фото не ставим. */
+  const ava = (m, cls = '') => {
+    const src = RC.teamPhoto(m.id);
+    const c = `cl-ava cl-ava--${esc(m.group)}${src ? ' cl-ava--photo' : ''}${cls ? ' ' + cls : ''}`;
+    return `<span class="${c}">${src ? `<img src="${esc(src)}" alt="${esc(shortName(m))}">` : esc(initials(shortName(m)))}</span>`;
+  };
+  /** Крупный портрет для шторки специалиста; без фото — большой аватар с инициалами. */
+  const portrait = (m) => {
+    const src = RC.teamPhoto(m.id);
+    return src ? `<span class="cl-ms__portrait"><img src="${esc(src)}" alt="${esc(shortName(m))}"></span>` : ava(m, 'cl-ava--xl');
+  };
+  /**
+   * Врач в карточке «помощь с выбором»: PNG-вырез специалиста клиники на прозрачном фоне,
+   * прижат к низу шапки карточки. Без фото — прежняя иллюстрация.
+   */
+  const helpHead = (inner, illuKind) => {
+    const src = RC.photoFor(RC.product('consult-offline-diagnostic')) || RC.image('clinic:5');
+    if (!src) return `<div class="cl-help__illu">${RC.illu(illuKind, { tone: RC.TONES.sage })}</div>${inner}`;
+    const cut = /\.png$/i.test(src);
+    return `<div class="cl-help__head${cut ? '' : ' cl-help__head--photo'}"><div class="cl-help__lead">${inner}</div><img class="cl-help__cut" src="${esc(src)}" alt="Врач Re:clinic"></div>`;
+  };
 
   RC.actions['cl-member'] = ({ id }, ctx) => {
     ctx.state.team = Object.assign({}, ctx.state.team || {}, { selected: id });
@@ -572,7 +592,7 @@
       'На карточке — профессия, опыт и главные направления работы',
       'Шторка специалиста: образование, стажировки, подход',
       'Запись из карточки по профилю: врач — в клинике, нутрициолог — онлайн; специалист сохраняется в записи',
-      'Фото добавляются из админ-панели, пока — инициалы',
+      'Реальные фото специалистов с сайта клиники — лицо врача до записи',
     ],
     examples: [
       { label: 'Список' },
@@ -604,7 +624,7 @@
         return ctx.ui.sheet(`<div class="cl-ms">
           <button class="cl-x cl-ms__close" ${RC.act('sheet-close')} aria-label="Закрыть">${I('x', 18)}</button>
           <div class="cl-ms__head">
-            ${ava(m, 'cl-ava--xl')}
+            ${portrait(m)}
             <div class="cl-ms__who">
               <h3>${esc(shortName(m))}</h3>
               <p>${esc(sub)}</p>
@@ -650,8 +670,8 @@
         }).join('')}
         ${diag ? `<section class="pad sec">
           <div class="cl-help">
-            <div class="cl-help__illu">${RC.illu('doctor', { tone: RC.TONES.sage })}</div>
-            <h3 class="cl-help__title">Не знаете, к&nbsp;кому записаться?</h3>
+            ${helpHead(`<span class="cl-help__kick">${I('stetho', 14)}Приём в клинике</span>
+            <h3 class="cl-help__title">Не знаете, к&nbsp;кому записаться?</h3>`, 'doctor')}
             <p class="cl-help__text">${esc(DIAG_TEAM)}</p>
             ${ui.btn(`Подобрать специалиста · ${RC.priceLabel(diag)}`, { variant: 'dark', block: true, attrs: RC.link('booking', { id: diag.id }, { 'booking.productId': diag.id, 'booking.specialist': null }) })}
           </div>
@@ -712,6 +732,11 @@
     </svg>`;
   }
   const pct = (v, total) => `${((v / total) * 100).toFixed(1)}%`;
+  /** Фото клиники с сайта в карточке филиала: интерьер и процедурный кабинет. */
+  const BRANCH_PHOTO = {
+    mosfilm: { ref: 'hero:5', pos: '50% 62%' },
+    kosmo: { ref: 'clinic:1', pos: '50% 30%' },
+  };
 
   /** «бесплатно при покупке программы / пептид-бокса / курса капельниц (прайс); …» → аккуратная фраза. */
   const freeNote = (p) => {
@@ -726,10 +751,11 @@
     id: 'contacts',
     title: 'Клиники',
     short: 'Филиалы: карта, маршрут, запись, связь',
-    note: 'Всё, чтобы клиент дошёл до клиники без звонка администратору: карта с маршрутом от метро, режим работы, парковка и подсказка на ресепшене. Записаться в выбранный филиал можно прямо отсюда. Связь — в один тап: телефон, Telegram-бот, Max или WhatsApp. Юридическая информация и документы — внизу, для прозрачности.',
+    note: 'Всё, чтобы клиент дошёл до клиники без звонка администратору: фото клиники, карта с маршрутом от метро, режим работы, парковка и подсказка на ресепшене. Записаться в выбранный филиал можно прямо отсюда. Связь — в один тап: телефон, Telegram-бот, Max или WhatsApp. Юридическая информация и документы — внизу, для прозрачности.',
     points: [
       'Переключатель филиалов: Мосфильмовская и Космодамианская',
       'Маршрут и такси — сразу в Яндекс Картах и Яндекс Go',
+      'Фото клиники с сайта — клиент заранее видит, куда придёт',
       'Как дойти от метро, парковка, ориентиры',
       'Запись на диагностическую консультацию в этот филиал, рядом — переход к онлайн-консультациям',
       'Звонок и мессенджеры в один тап',
@@ -765,6 +791,8 @@
         : doc('Лицензии медицинских партнёров', partnerBrands.join(', '));
       const diag = RC.product('consult-offline-diagnostic');
       const branchShort = b.shortName || b.name;
+      const bp = BRANCH_PHOTO[b.id] || BRANCH_PHOTO.mosfilm;
+      const branchPhoto = RC.image(bp.ref) ? { src: RC.image(bp.ref), pos: bp.pos } : null;
 
       const tiles = [
         ms.telegram && { cls: 'tg', mark: I('telegram', 20), t: 'Telegram', s: 'бот записи', toast: { text: 'Откроется бот Re:clinic', sub: '@Resource_clinicBot', icon: 'telegram' } },
@@ -793,6 +821,7 @@
             ${ui.btn('Построить маршрут', { icon: 'route', attrs: RC.act('toast', { text: 'Маршрут в Яндекс Картах', sub: b.address, icon: 'route' }) })}
             ${ui.btn('Такси', { variant: 'soft', attrs: RC.act('toast', { text: 'Такси до клиники в Яндекс Go', sub: b.address, icon: 'route' }) })}
           </div>
+          ${branchPhoto ? `<figure class="cl-br__photo"><img src="${esc(branchPhoto.src)}" alt="Re:clinic, ${esc(branchShort)}" style="object-position:${branchPhoto.pos}"></figure>` : ''}
           ${b.arrivalNote ? `<div class="cl-note">${I('info', 20)}<p>${esc(b.arrivalNote)}</p></div>` : ''}
         </section>
 
@@ -818,9 +847,8 @@
 
         ${diag ? `<section class="pad sec">
           <div class="cl-help cl-help--book">
-            <div class="cl-help__illu">${RC.illu('consult-offline', { tone: RC.TONES.sage })}</div>
-            <span class="cl-help__kick">${I('pin', 14)}${esc(branchShort)}</span>
-            <h3 class="cl-help__title">Запишитесь на&nbsp;приём</h3>
+            ${helpHead(`<span class="cl-help__kick">${I('pin', 14)}${esc(branchShort)}</span>
+            <h3 class="cl-help__title">Запишитесь на&nbsp;приём</h3>`, 'consult-offline')}
             <p class="cl-help__text">${esc(diag.id === 'consult-offline-diagnostic'
               ? 'Врач проведёт приём и аппаратный анализ состава тела, а затем подберёт программу, пептиды или курс капельниц'
               : `${diag.title}: ${lowerFirst(plusToAnd(diag.short))}. Врач подберёт программу, пептиды или курс капельниц`)}</p>

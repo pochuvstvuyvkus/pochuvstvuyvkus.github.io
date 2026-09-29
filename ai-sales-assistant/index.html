@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>AI-помощник менеджера</title>
+<meta name="description" content="Прототип: обращение клиента, поиск по базе знаний, ответ клиенту и подсказка по допродаже для менеджера в окне в стиле amoCRM">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#eef1f5; --panel:#fff; --line:#e1e5eb; --text:#1d2433; --muted:#6b7485;
+  --accent:#2a7de1; --accent-soft:#e8f1fc; --client:#f3f5f8; --manager:#e3f4ea;
+  --ai:#fff8e6; --ai-line:#f2d48a; --up:#f1ecff; --up-line:#c9b8f5; --danger:#d64545;
+  --top:#1f2a3d; --top-text:#cfd6e2;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#11151c; --panel:#1a2029; --line:#2b3340; --text:#e6e9ef; --muted:#98a2b3;
+    --accent:#4b93ec; --accent-soft:#1d2d44; --client:#222a35; --manager:#1d3328;
+    --ai:#2f2a1a; --ai-line:#6b5a2a; --up:#261f3d; --up-line:#54448a; --top:#0b0e13; --top-text:#aab3c2;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11151c; --panel:#1a2029; --line:#2b3340; --text:#e6e9ef; --muted:#98a2b3;
+  --accent:#4b93ec; --accent-soft:#1d2d44; --client:#222a35; --manager:#1d3328;
+  --ai:#2f2a1a; --ai-line:#6b5a2a; --up:#261f3d; --up-line:#54448a; --top:#0b0e13; --top-text:#aab3c2;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 Inter,system-ui,sans-serif}
+button,input,textarea,select{font:inherit;color:inherit}
+.top{background:var(--top);color:var(--top-text);display:flex;align-items:center;gap:16px;padding:10px 16px;flex-wrap:wrap}
+.top b{color:#fff}
+.top .sp{flex:1}
+.pill{font-size:12px;padding:3px 8px;border-radius:99px;background:#ffffff1a}
+.pill.live{background:#1f9d55;color:#fff}
+.top button{background:#ffffff14;border:1px solid #ffffff26;color:#fff;border-radius:6px;padding:6px 10px;cursor:pointer}
+.wrap{display:grid;grid-template-columns:260px minmax(0,1fr) 380px;gap:12px;padding:12px;max-width:1500px;margin:0 auto}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.card h3{margin:0;padding:12px 14px;border-bottom:1px solid var(--line);font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.lead{padding:12px 14px}
+.lead .name{font-size:17px;font-weight:600}
+.row{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px dashed var(--line)}
+.row span:first-child{color:var(--muted)}
+.stage{display:inline-block;margin:8px 0;padding:3px 8px;border-radius:4px;background:var(--accent-soft);color:var(--accent);font-weight:600;font-size:12px}
+.samples{padding:10px 14px;display:flex;flex-direction:column;gap:6px}
+.samples button{text-align:left;background:var(--client);border:1px solid var(--line);border-radius:8px;padding:8px 10px;cursor:pointer}
+.samples button:hover{border-color:var(--accent)}
+.chat{display:flex;flex-direction:column;min-height:620px}
+.feed{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:10px;max-height:62vh}
+.msg{max-width:78%;padding:9px 12px;border-radius:10px;white-space:pre-wrap}
+.msg small{display:block;color:var(--muted);font-size:11px;margin-bottom:2px}
+.msg.client{background:var(--client);align-self:flex-start}
+.msg.manager{background:var(--manager);align-self:flex-end}
+.msg.note{background:var(--up);border:1px dashed var(--up-line);align-self:center;max-width:90%;font-size:13px}
+.composer{border-top:1px solid var(--line);padding:10px;display:flex;flex-direction:column;gap:8px}
+.tabs{display:flex;gap:6px}
+.tabs button{border:1px solid var(--line);background:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px}
+.tabs button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 10px;background:var(--panel);resize:vertical}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:9px 14px;font-weight:600;cursor:pointer}
+.btn.ghost{background:none;color:var(--accent);border:1px solid var(--accent)}
+.btn:disabled{opacity:.55;cursor:default}
+.ai{display:flex;flex-direction:column;gap:12px}
+.block{padding:12px 14px}
+.block .t{font-weight:600;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.block .body{white-space:pre-wrap}
+.reply{background:var(--ai);border:1px solid var(--ai-line);border-radius:10px}
+.upsell{background:var(--up);border:1px solid var(--up-line);border-radius:10px}
+.kbhit{font-size:12px;color:var(--muted);padding:10px 14px}
+.kbhit li{margin:3px 0}
+.empty{color:var(--muted);padding:14px}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid #fff8;border-top-color:#fff;border-radius:50%;animation:r .8s linear infinite;vertical-align:-2px}
+@keyframes r{to{transform:rotate(360deg)}}
+.tag{font-size:11px;padding:2px 6px;border-radius:4px;background:var(--panel);border:1px solid var(--line);color:var(--muted);font-weight:500}
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--text);max-width:720px;width:calc(100% - 32px);padding:0}
+dialog::backdrop{background:#0008}
+dialog .in{padding:16px;display:flex;flex-direction:column;gap:10px}
+dialog label{font-weight:600;font-size:13px}
+dialog input,dialog select{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--panel)}
+.hint{font-size:12px;color:var(--muted)}
+.err{color:var(--danger)}
+@media (max-width:1100px){.wrap{grid-template-columns:1fr}.feed{max-height:none}.chat{min-height:0}}
+</style>
+</head>
+<body>
+<div class="top">
+  <b>amo·AI</b><span>Сделка #4821 · Кондиционеры</span>
+  <span class="sp"></span>
+  <span id="mode" class="pill">Демо-режим</span>
+  <button id="openKb">База знаний</button>
+  <button id="openKey">Подключить нейросеть</button>
+</div>
+
+<div class="wrap">
+  <aside class="card">
+    <h3>Карточка сделки</h3>
+    <div class="lead">
+      <div class="name">Анна Смирнова</div>
+      <div class="stage">Первичный контакт</div>
+      <div class="row"><span>Бюджет</span><span>45 000 ₽</span></div>
+      <div class="row"><span>Источник</span><span>Сайт, WhatsApp</span></div>
+      <div class="row"><span>Город</span><span>Ростов-на-Дону</span></div>
+      <div class="row"><span>Покупки</span><span>нет</span></div>
+      <div class="row"><span>Ответственный</span><span>Менеджер Олег</span></div>
+    </div>
+    <h3>Примеры обращений</h3>
+    <div class="samples" id="samples"></div>
+  </aside>
+
+  <main class="card chat">
+    <h3>Чат с клиентом</h3>
+    <div class="feed" id="feed"></div>
+    <div class="composer">
+      <div class="tabs">
+        <button class="on" data-role="client">Сообщение клиента</button>
+        <button data-role="manager">Ответ менеджера</button>
+      </div>
+      <textarea id="input" rows="3" placeholder="Например: Здравствуйте, сколько стоит кондиционер в комнату 20 м² с установкой?"></textarea>
+      <div class="actions">
+        <button class="btn" id="send">Отправить в чат</button>
+        <button class="btn ghost" id="analyze">Спросить AI-помощника</button>
+        <button class="btn ghost" id="reset">Очистить диалог</button>
+      </div>
+    </div>
+  </main>
+
+  <aside class="ai">
+    <div class="card reply block">
+      <div class="t">Ответ клиенту <span class="tag" id="srcTag"></span></div>
+      <div class="body" id="reply"><span class="empty">Напишите сообщение клиента и нажмите «Спросить AI-помощника».</span></div>
+      <div class="actions" style="margin-top:10px"><button class="btn" id="useReply" disabled>Вставить в чат</button></div>
+    </div>
+    <div class="card upsell block">
+      <div class="t">Подсказка по допродаже <span class="tag">видит только менеджер</span></div>
+      <div class="body" id="upsell"><span class="empty">Здесь появится, что предложить клиенту дополнительно и как сказать.</span></div>
+    </div>
+    <div class="card">
+      <h3>Найдено в базе знаний</h3>
+      <ul class="kbhit" id="hits"><li>Пока пусто</li></ul>
+    </div>
+  </aside>
+</div>
+
+<dialog id="kbDlg"><div class="in">
+  <label for="kb">База знаний (разделы отделяются пустой строкой, первая строка раздела это заголовок)</label>
+  <textarea id="kb" rows="18"></textarea>
+  <div class="actions"><button class="btn" id="kbSave">Сохранить</button><button class="btn ghost" id="kbDefault">Вернуть исходную</button><button class="btn ghost" data-close>Закрыть</button></div>
+</div></dialog>
+
+<dialog id="keyDlg"><div class="in">
+  <label for="key">Ключ OpenRouter (sk-or-...) или Anthropic (sk-ant-...)</label>
+  <input id="key" type="password" autocomplete="off" placeholder="sk-or-v1-...">
+  <label for="model">Модель</label>
+  <input id="model" placeholder="anthropic/claude-sonnet-5">
+  <div class="hint">Ключ хранится только в этом браузере (localStorage) и отправляется напрямую в API нейросети. Без ключа работает демо-режим с заранее сгенерированными ответами.</div>
+  <div class="actions"><button class="btn" id="keySave">Подключить</button><button class="btn ghost" id="keyClear">Отключить</button><button class="btn ghost" data-close>Закрыть</button></div>
+</div></dialog>
+
+<script src="demo.js"></script>
+<script>
+const DEFAULT_KB = `Компания
+«КлиматПро», Ростов-на-Дону и область. Продажа, монтаж и обслуживание кондиционеров с 2014 года. Работаем ежедневно с 9 до 21. Гарантия на монтаж 3 года.
+
+Подбор мощности
+Мощность подбирается по площади: до 20 м² модель 07 (2,1 кВт), до 25 м² модель 09 (2,6 кВт), до 35 м² модель 12 (3,5 кВт), до 50 м² модель 18 (5,3 кВт). Солнечная сторона, последний этаж или много техники: берём на ступень мощнее.
+
+Модели и цены
+Ballu Eco 07: 19 900 ₽. Ballu Eco 09: 22 900 ₽. Инвертор Royal Clima Gloria 09: 32 900 ₽. Инвертор Royal Clima Gloria 12: 38 900 ₽. Инвертор Daikin FTXF 09: 54 900 ₽. Инвертор тише на 5–7 дБ, экономит до 40% электроэнергии, держит температуру без перепадов и работает на обогрев до −15 °C.
+
+Монтаж
+Стандартный монтаж 7 990 ₽: трасса до 3 м, пробивка стены, дренаж, вакуумирование, запуск. Каждый дополнительный метр трассы 1 200 ₽. Монтаж на высоте (альпинист) от 3 500 ₽. Демонтаж старого кондиционера 2 500 ₽. Срок: в течение 1–3 дней после заказа.
+
+Доставка и оплата
+Доставка по Ростову бесплатно при заказе с монтажом, без монтажа 500 ₽. Оплата картой, наличными, по QR, рассрочка 0% на 6 месяцев от 20 000 ₽ через банк-партнёр.
+
+Обслуживание
+Сервисная чистка 2 500 ₽: промывка фильтров и теплообменника, антибактериальная обработка, проверка давления фреона. Рекомендуется раз в год, при аллергии раз в полгода. Абонемент на 2 чистки в год 4 200 ₽. Дозаправка фреоном от 1 500 ₽.
+
+Допродажи и акции
+При покупке кондиционера с монтажом: сервисная чистка через год в подарок. Абонемент на обслуживание со скидкой 20% при оформлении вместе с покупкой (3 360 ₽ вместо 4 200 ₽). Второй кондиционер в ту же квартиру: скидка 15% на монтаж второго блока. Защитный козырёк для наружного блока 1 900 ₽. Wi-Fi модуль для управления со смартфона 3 500 ₽ (для Royal Clima Gloria и Daikin). Фильтр с ионизатором 1 200 ₽.
+
+Возражения
+Дорого: предложить рассрочку 0% или модель Ballu Eco. Шумно: предложить инвертор. Долго ждать: ближайший монтаж обычно на завтра. Сомневается в качестве монтажа: гарантия 3 года, мастера в штате, фото отчёт после работ.`;
+
+const SYSTEM = `Ты AI-помощник менеджера по продажам в amoCRM. Тебе дают базу знаний компании (только найденные фрагменты), карточку сделки и историю диалога с клиентом.
+Верни два блока:
+1) reply: вежливый ответ клиенту от лица менеджера. Коротко (2–5 предложений), по делу, дружелюбно. Только факты из базы знаний: цены, сроки, условия. Если в базе нет ответа, честно скажи, что уточнишь, и задай уточняющий вопрос. Заверши вопросом, который двигает сделку. Не используй тире, пиши простыми предложениями без оговорок и самоисправлений.
+2) upsell: подсказка для менеджера (клиент её не видит): что допродать сейчас, почему это уместно именно этому клиенту по его словам и что сказать одной фразой. Учитывай, что менеджер уже писал в диалоге, чтобы не повторяться. Если допродажа сейчас неуместна, так и скажи и объясни, когда предложить.
+Ответ строго JSON: {"reply":"...","upsell":{"offer":"...","why":"...","script":"..."},"used":[номера разделов]}`;
+
+const DEMO = window.DEMO_DATA || [];
+const $ = s => document.querySelector(s);
+const store = {get:k=>{try{return localStorage.getItem(k)}catch(e){return null}}, set:(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}}};
+let kbText = store.get('kb') || DEFAULT_KB;
+let dialog = [];
+let role = 'client';
+let lastReply = '';
+
+function sections(text){
+  return text.split(/\n\s*\n/).map((b,i)=>{const lines=b.trim().split('\n');return {id:i+1,title:lines[0].trim(),body:lines.slice(1).join('\n').trim()}}).filter(s=>s.title);
+}
+const stem = w => w.toLowerCase().replace(/ё/g,'е').slice(0,5);
+const words = t => (t.toLowerCase().match(/[a-zа-яё0-9]{3,}/gi)||[]).map(stem);
+function retrieve(query, k=5){
+  const q = new Set(words(query));
+  return sections(kbText).map(s=>{
+    const w = words(s.title+' '+s.body); let score = 0;
+    w.forEach(x=>{ if(q.has(x)) score++; });
+    words(s.title).forEach(x=>{ if(q.has(x)) score+=3; });
+    return {...s, score};
+  }).sort((a,b)=>b.score-a.score).slice(0,k).filter(s=>s.score>0);
+}
+
+function render(){
+  const feed = $('#feed'); feed.innerHTML='';
+  if(!dialog.length){ feed.innerHTML='<div class="empty">Диалог пуст. Выберите пример слева или напишите сообщение клиента.</div>'; }
+  dialog.forEach(m=>{
+    const d=document.createElement('div'); d.className='msg '+m.role;
+    d.innerHTML=`<small>${m.role==='client'?'Анна Смирнова':m.role==='manager'?'Менеджер Олег':'Заметка AI'}</small>`;
+    d.appendChild(document.createTextNode(m.text)); feed.appendChild(d);
+  });
+  feed.scrollTop = feed.scrollHeight;
+}
+function setMode(){
+  const live = !!store.get('key');
+  $('#mode').textContent = live ? 'Нейросеть подключена' : 'Демо-режим';
+  $('#mode').className = 'pill' + (live ? ' live' : '');
+}
+function showResult(res, hits, source){
+  lastReply = res.reply || '';
+  $('#reply').textContent = lastReply || 'Нет ответа';
+  const u = res.upsell || {};
+  $('#upsell').innerHTML = '';
+  [['Что предложить', u.offer], ['Почему уместно', u.why], ['Как сказать', u.script]].forEach(([t,v])=>{
+    if(!v) return; const p=document.createElement('p'); p.style.margin='0 0 8px';
+    p.innerHTML=`<b>${t}:</b> `; p.appendChild(document.createTextNode(v)); $('#upsell').appendChild(p);
+  });
+  $('#hits').innerHTML = hits.length ? hits.map(h=>`<li><b>${h.id}. ${h.title}</b>${(res.used||[]).includes(h.id)?' · использовано в ответе':''}</li>`).join('') : '<li>Совпадений нет, ответ без базы</li>';
+  $('#srcTag').textContent = source;
+  $('#useReply').disabled = !lastReply;
+}
+
+async function callLLM(hits){
+  const key = store.get('key'); const model = store.get('model');
+  const kb = hits.map(h=>`[${h.id}] ${h.title}\n${h.body}`).join('\n\n') || '(ничего не найдено)';
+  const user = `База знаний:\n${kb}\n\nКарточка сделки: Анна Смирнова, этап «Первичный контакт», бюджет 45 000 ₽, Ростов-на-Дону, покупок не было.\n\nДиалог:\n${dialog.map(m=>(m.role==='client'?'Клиент':m.role==='manager'?'Менеджер':'Заметка')+': '+m.text).join('\n')}`;
+  let text;
+  if(key.startsWith('sk-ant-')){
+    const r = await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:model||'claude-sonnet-5',max_tokens:1200,system:SYSTEM,messages:[{role:'user',content:user}]})});
+    const j = await r.json(); if(!r.ok) throw new Error(j.error?.message||r.status); text = j.content.map(c=>c.text||'').join('');
+  } else {
+    const r = await fetch('https://openrouter.ai/api/v1/chat/completions',{method:'POST',headers:{'content-type':'application/json','authorization':'Bearer '+key,'X-Title':'amo AI assistant prototype'},
+      body:JSON.stringify({model:model||'anthropic/claude-sonnet-5',max_tokens:1200,messages:[{role:'system',content:SYSTEM},{role:'user',content:user}],response_format:{type:'json_object'}})});
+    const j = await r.json(); if(!r.ok) throw new Error(j.error?.message||r.status); text = j.choices[0].message.content;
+  }
+  const m = text.match(/\{[\s\S]*\}/); if(!m) throw new Error('модель вернула не JSON');
+  return JSON.parse(m[0]);
+}
+
+async function analyze(){
+  const pending = $('#input').value.trim();
+  if(pending && role==='client'){ dialog.push({role:'client',text:pending}); $('#input').value=''; render(); }
+  const lastClient = [...dialog].reverse().find(m=>m.role==='client');
+  if(!lastClient){ $('#reply').innerHTML='<span class="err">Сначала добавьте сообщение клиента.</span>'; return; }
+  const query = dialog.filter(m=>m.role==='client').slice(-2).map(m=>m.text).join(' ');
+  const hits = retrieve(query);
+  const btn = $('#analyze'); btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Думаю…';
+  try{
+    if(store.get('key')){
+      showResult(await callLLM(hits), hits, 'нейросеть, в реальном времени');
+    } else {
+      const demo = DEMO.find(d=>d.client===lastClient.text);
+      if(demo) showResult(demo.result, hits, 'демо: заранее сгенерировано Claude');
+      else { $('#reply').innerHTML='<span class="err">В демо-режиме работают только примеры слева. Для своих сообщений подключите нейросеть (кнопка вверху).</span>'; $('#upsell').textContent=''; }
+    }
+  }catch(e){ $('#reply').innerHTML=''; const s=document.createElement('span'); s.className='err'; s.textContent='Ошибка нейросети: '+e.message; $('#reply').appendChild(s); }
+  btn.disabled = false; btn.textContent = 'Спросить AI-помощника';
+}
+
+$('#samples').innerHTML = DEMO.map((d,i)=>`<button data-i="${i}">${d.label}</button>`).join('');
+$('#samples').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return; const d=DEMO[+b.dataset.i];
+  dialog = JSON.parse(JSON.stringify(d.history||[])); dialog.push({role:'client',text:d.client}); render(); analyze();
+});
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); role=b.dataset.role;
+  $('#input').placeholder = role==='client' ? 'Сообщение клиента' : 'Что написал менеджер (AI учтёт это в подсказке)';
+});
+$('#send').onclick=()=>{ const t=$('#input').value.trim(); if(!t) return; dialog.push({role,text:t}); $('#input').value=''; render(); };
+$('#analyze').onclick=analyze;
+$('#reset').onclick=()=>{ dialog=[]; render(); };
+$('#useReply').onclick=()=>{ if(!lastReply) return; dialog.push({role:'manager',text:lastReply}); render(); $('#useReply').disabled=true; };
+$('#openKb').onclick=()=>{ $('#kb').value=kbText; $('#kbDlg').showModal(); };
+$('#kbSave').onclick=()=>{ kbText=$('#kb').value; store.set('kb',kbText); $('#kbDlg').close(); };
+$('#kbDefault').onclick=()=>{ kbText=DEFAULT_KB; store.set('kb',null); $('#kb').value=kbText; };
+$('#openKey').onclick=()=>{ $('#key').value=store.get('key')||''; $('#model').value=store.get('model')||''; $('#keyDlg').showModal(); };
+$('#keySave').onclick=()=>{ store.set('key',$('#key').value.trim()||null); store.set('model',$('#model').value.trim()||null); setMode(); $('#keyDlg').close(); };
+$('#keyClear').onclick=()=>{ store.set('key',null); $('#key').value=''; setMode(); };
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>b.closest('dialog').close());
+setMode(); render();
+</script>
+</body>
+</html>

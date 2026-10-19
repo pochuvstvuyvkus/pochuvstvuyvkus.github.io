@@ -410,6 +410,8 @@ function renderPeople() {
     let sub = chips.join("");
     if (isRecord) sub += `салон ${p.salon}${p.visit ? ` · визит ${dateTime(p.visit)}` : ""}${p.vk ? "" : " · переписка не найдена"}`;
     else sub += p.vk.replace("https://", "");
+    // the dialog in the community's messages, at the lead's first message or the admin's «Записали» (admins only)
+    if (p.dialog) sub += `<a class="dialog-link" href="${p.dialog}" target="_blank" rel="noopener">${CHAT_ICON}${p.to_message ? "К сообщению" : "Переписка"}</a>`;
     return `<li class="person">${name}<div class="person-when">${isRecord ? "создана " : ""}${dateTime(p.at)}</div><div class="person-sub">${sub}</div></li>`;
   }).join("");
   renderPager(list.length);
@@ -430,6 +432,7 @@ function pageNumbers(current, total) {
   return result;
 }
 
+const CHAT_ICON = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>';
 const ARROW_LEFT = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>';
 const ARROW_RIGHT = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>';
 

@@ -31,7 +31,11 @@ function authHeaders() { const t = token(); return t ? { Authorization: `Bearer 
 
 async function api(path) {
   const response = await fetch(API_BASE + path, { headers: authHeaders(), credentials: API_BASE ? "omit" : "same-origin" });
-  if (response.status === 401) { dropToken(); location.href = "login.html"; throw new Error("unauthorized"); }
+  if (response.status === 401) {
+    dropToken();
+    location.href = "login.html";
+    return new Promise(() => {});  // the page is leaving: nothing waits for this answer
+  }
   if (!response.ok) throw new Error(await response.text());
   return response.json();
 }

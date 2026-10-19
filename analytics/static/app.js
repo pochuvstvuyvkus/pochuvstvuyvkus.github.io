@@ -538,6 +538,7 @@ function bind() {
 }
 
 (async function start() {
+  if (API_BASE && !token()) { location.replace("login.html"); return; }  // on another site only the token signs in
   meta = await api("/api/meta");
   readHash();
   if (!state.from) [state.from, state.to] = presetRange(state.preset).map(iso);

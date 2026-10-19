@@ -13,13 +13,13 @@ const CATEGORIES = [
   ["norec", "Без записи", "without_record"],
   ["non", "Не лиды", "non_leads"],
 ];
-const PAGE = 100;
+const PAGE_SIZES = [50, 100, 200];
+const PAGE_SIZE_KEY = "mark_page_size";
 
-const state = { source: "all", from: null, to: null, preset: "30d", category: "new", search: "", shown: PAGE };
+const state = { source: "all", from: null, to: null, preset: "30d", category: "new", search: "", page: 1, pageSize: savedPageSize() };
 let meta = null;
 let dashboard = null;
 let people = [];
-let loadToken = 0;
 let hideTooltip = () => {};
 
 const $ = (id) => document.getElementById(id);
@@ -27,6 +27,12 @@ const fmt = (n) => (n === null || n === undefined ? "—" : n.toLocaleString("ru
 
 function token() { try { return localStorage.getItem(TOKEN_KEY); } catch (e) { return null; } }
 function dropToken() { try { localStorage.removeItem(TOKEN_KEY); } catch (e) { /* storage blocked */ } }
+function savedPageSize() {
+  try {
+    const size = Number(localStorage.getItem(PAGE_SIZE_KEY));
+    return PAGE_SIZES.includes(size) ? size : PAGE_SIZES[0];
+  } catch (e) { return PAGE_SIZES[0]; }
+}
 function authHeaders() { const t = token(); return t ? { Authorization: `Bearer ${t}` } : {}; }
 
 async function api(path) {
@@ -90,7 +96,11 @@ function sourceColor(key) {
 
 function renderSources() {
   const counts = {};
-  if (dashboard) {
+  const network = dashboards.get(viewKey("all"))?.data;
+  if (network) {
+    counts.all = network.total.leads;
+    network.sources.forEach((s) => { counts[s.key] = s.leads; });
+  } else if (dashboard) {
     counts.all = dashboard.total.leads;
     if (dashboard.source === "all") dashboard.sources.forEach((s) => { counts[s.key] = s.leads; });
     else counts[dashboard.source] = dashboard.total.leads;
@@ -109,28 +119,25 @@ function renderSources() {
 
 // ---- KPI tiles -----------------------------------------------------------
 
+const KPI_TILES = [
+  ["Новые лиды", "var(--brand)", (t) => fmt(t.new), () => "впервые написали"],
+  ["Лиды из базы", "var(--base)", (t) => fmt(t.base), () => "уже писали раньше"],
+  ["Всего лидов", null, (t) => fmt(t.leads), () => "написали в сообщения"],
+  ["Записи", "var(--green)", (t) => fmt(t.records),
+    (t) => (t.records === null ? "нет данных YCLIENTS" : `с новых ${fmt(t.records_new)} · из базы ${fmt(t.records_base)}`)],
+  ["Конверсия", null, (t) => (t.conversion === null ? "—" : `${t.conversion}%`), () => "лидов записались"],
+  ["Без записи", null, (t) => fmt(t.without_record), () => "лиды, не записавшиеся"],
+  ["Не лиды", "var(--amber)", (t) => fmt(t.non_leads), () => "перенос или отмена записи"],
+];
+
+// total = null: the names stay, the numbers are placeholders until the period arrives
 function renderKpis(total) {
-  const noRecords = total.records === null;
-  const tiles = [
-    ["Новые лиды", fmt(total.new), "впервые написали", "var(--brand)"],
-    ["Лиды из базы", fmt(total.base), "уже писали раньше", "var(--base)"],
-    ["Всего лидов", fmt(total.leads), "написали в сообщения", null],
-    ["Записи", fmt(total.records), noRecords ? "нет данных YCLIENTS" : `с новых ${fmt(total.records_new)} · из базы ${fmt(total.records_base)}`, "var(--green)"],
-    ["Конверсия", total.conversion === null ? "—" : `${total.conversion}%`, "лидов записались", null],
-    ["Без записи", fmt(total.without_record), "лиды, не записавшиеся", null],
-    ["Не лиды", fmt(total.non_leads), "перенос или отмена записи", "var(--amber)"],
-  ];
-  $("kpis").innerHTML = tiles.map(([label, value, cap, color]) => `
+  $("kpis").innerHTML = KPI_TILES.map(([label, color, value, cap]) => `
     <div class="card kpi">
       <div class="kpi-label">${color ? `<i class="swatch" style="background:${color}"></i>` : ""}${label}</div>
-      <div class="kpi-value">${value}</div>
-      <div class="kpi-cap">${cap}</div>
+      <div class="kpi-value">${total ? value(total) : '<span class="skeleton"></span>'}</div>
+      <div class="kpi-cap">${total ? cap(total) : '<span class="skeleton-line" style="width:70%"></span>'}</div>
     </div>`).join("");
-}
-
-function renderSkeleton() {
-  $("kpis").innerHTML = Array.from({ length: 7 }, () => `
-    <div class="card kpi"><div class="kpi-label">&nbsp;</div><div class="kpi-value"><span class="skeleton"></span></div><div class="kpi-cap"></div></div>`).join("");
 }
 
 // ---- chart ---------------------------------------------------------------
@@ -142,10 +149,12 @@ function niceMax(value) {
   return 10 * step;
 }
 
+function chartHeight(width) { return width < 520 ? 210 : width < 900 ? 240 : 280; }
+
 function renderChart(series) {
   const box = $("chart");
   const width = Math.max(box.clientWidth, 260);
-  const height = width < 520 ? 210 : width < 900 ? 240 : 280;
+  const height = chartHeight(width);
   const pad = { l: 32, r: 8, t: 12, b: 28 };
   const points = series.points;
   const innerW = width - pad.l - pad.r;
@@ -237,7 +246,7 @@ function renderTable(data) {
 
 function renderTabs(total) {
   $("tabs").innerHTML = CATEGORIES.map(([key, label, field]) => `
-    <button class="tab${key === state.category ? " active" : ""}" data-category="${key}">${label}<em>${total[field] === null ? "—" : fmt(total[field])}</em></button>`).join("");
+    <button class="tab${key === state.category ? " active" : ""}" data-category="${key}">${label}<em>${!total ? "" : total[field] === null ? "—" : fmt(total[field])}</em></button>`).join("");
 }
 
 function renderPeople() {
@@ -245,10 +254,14 @@ function renderPeople() {
   const list = query ? people.filter((p) => p.name.toLowerCase().includes(query)) : people;
   if (!list.length) {
     $("people").innerHTML = `<li class="empty">${people.length ? "Никого не нашлось" : "Пусто за этот период"}</li>`;
+    renderPager(0);
     return;
   }
   const isRecord = state.category.startsWith("rec");
-  const shown = list.slice(0, state.shown);
+  const pages = Math.ceil(list.length / state.pageSize);
+  state.page = Math.min(Math.max(1, state.page), pages);
+  const first = (state.page - 1) * state.pageSize;
+  const shown = list.slice(first, first + state.pageSize);
   $("people").innerHTML = shown.map((p) => {
     const name = p.vk ? `<a class="person-name" href="${p.vk}" target="_blank" rel="noopener">${escapeHtml(p.name)}</a>` : `<span class="person-name">${escapeHtml(p.name)}</span>`;
     const chips = [];
@@ -257,27 +270,74 @@ function renderPeople() {
     if (isRecord) sub += `салон ${p.salon}${p.visit ? ` · визит ${dateTime(p.visit)}` : ""}${p.vk ? "" : " · переписка не найдена"}`;
     else sub += p.vk.replace("https://", "");
     return `<li class="person">${name}<div class="person-when">${isRecord ? "создана " : ""}${dateTime(p.at)}</div><div class="person-sub">${sub}</div></li>`;
-  }).join("") + (list.length > shown.length ? `<li><button class="more" id="more">Показать ещё (${list.length - shown.length})</button></li>` : "");
-  const more = $("more");
-  if (more) more.addEventListener("click", () => { state.shown += PAGE; renderPeople(); });
+  }).join("");
+  renderPager(list.length);
+}
+
+// 1 … 4 5 6 … 11: the first and last page, the current one and its neighbours
+function pageNumbers(current, total) {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const wanted = new Set([1, total, current - 1, current, current + 1]);
+  if (current <= 4) [2, 3, 4, 5].forEach((n) => wanted.add(n));
+  if (current >= total - 3) [total - 4, total - 3, total - 2, total - 1].forEach((n) => wanted.add(n));
+  const sorted = [...wanted].filter((n) => n >= 1 && n <= total).sort((a, b) => a - b);
+  const result = [];
+  sorted.forEach((n, i) => {
+    if (i && n - sorted[i - 1] > 1) result.push(null);
+    result.push(n);
+  });
+  return result;
+}
+
+const ARROW_LEFT = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>';
+const ARROW_RIGHT = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>';
+
+function renderPager(count) {
+  const pager = $("pager");
+  if (count <= PAGE_SIZES[0]) { pager.hidden = true; return; }  // fits on one page at any size
+  pager.hidden = false;
+  const pages = Math.ceil(count / state.pageSize);
+  const first = (state.page - 1) * state.pageSize + 1;
+  const last = Math.min(count, state.page * state.pageSize);
+  const numbers = pages > 1 ? pageNumbers(state.page, pages).map((n) => (n === null
+    ? '<span class="page-gap">…</span>'
+    : `<button class="page-btn page-num${n === state.page ? " active" : ""}" data-page="${n}"${n === state.page ? ' aria-current="page"' : ""}>${n}</button>`)).join("") : "";
+  pager.innerHTML = `
+    <div class="pager-info">${fmt(first)}–${fmt(last)} из ${fmt(count)}</div>
+    <div class="pager-pages"${pages > 1 ? "" : " hidden"}>
+      <button class="page-btn page-arrow" data-page="${state.page - 1}" aria-label="Предыдущая страница"${state.page === 1 ? " disabled" : ""}>${ARROW_LEFT}</button>
+      ${numbers}
+      <span class="page-compact">${state.page} из ${pages}</span>
+      <button class="page-btn page-arrow" data-page="${state.page + 1}" aria-label="Следующая страница"${state.page === pages ? " disabled" : ""}>${ARROW_RIGHT}</button>
+    </div>
+    <div class="pager-size">
+      <span>По</span>
+      <div class="size-switch">${PAGE_SIZES.map((size) => `<button data-size="${size}"${size === state.pageSize ? ' class="active" aria-pressed="true"' : ' aria-pressed="false"'}>${size}</button>`).join("")}</div>
+    </div>`;
+}
+
+function goToPage(page) {
+  state.page = page;
+  renderPeople();
+  const card = $("people-card");
+  if (card.getBoundingClientRect().top < 0) card.scrollIntoView({ block: "start", behavior: "smooth" });
+}
+
+function bindPager() {
+  $("pager").addEventListener("click", (event) => {
+    const page = event.target.closest("[data-page]");
+    if (page && !page.disabled) { goToPage(Number(page.dataset.page)); return; }
+    const size = event.target.closest("[data-size]");
+    if (!size || Number(size.dataset.size) === state.pageSize) return;
+    const firstShown = (state.page - 1) * state.pageSize;  // keep the first visible person on screen
+    state.pageSize = Number(size.dataset.size);
+    try { localStorage.setItem(PAGE_SIZE_KEY, String(state.pageSize)); } catch (e) { /* storage blocked */ }
+    goToPage(Math.floor(firstShown / state.pageSize) + 1);
+  });
 }
 
 function escapeHtml(s) {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-}
-
-async function loadPeople() {
-  const token = loadToken;
-  $("people").parentElement.classList.add("loading");
-  try {
-    const data = await api(`/api/people?${new URLSearchParams({ source: state.source, from: state.from, to: state.to, category: state.category })}`);
-    if (token !== loadToken) return;
-    people = data.items;
-    state.shown = PAGE;
-    renderPeople();
-  } finally {
-    $("people").parentElement.classList.remove("loading");
-  }
 }
 
 // ---- main load -----------------------------------------------------------
@@ -288,6 +348,17 @@ function rangeText(from, to) {
   const full = (d) => `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}`;
   if (from === to) return full(a);
   return `${shortDate(from)}${a.getFullYear() !== b.getFullYear() ? `.${a.getFullYear()}` : ""} – ${full(b)}`;
+}
+
+const MONTHS = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+
+// The same name the server gives the period, so the label does not change when the numbers arrive.
+function periodLabel(from, to) {
+  const a = parse(from);
+  const b = parse(to);
+  const wholeMonth = a.getDate() === 1 && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth()
+    && addDays(b, 1).getDate() === 1;
+  return wholeMonth ? `${MONTHS[a.getMonth()]} ${a.getFullYear()}` : rangeText(from, to);
 }
 
 function renderHeader() {
@@ -413,6 +484,7 @@ function applyPicker() {
   state.preset = null;
   state.from = iso(picker.start);
   state.to = iso(picker.end);
+  state.page = 1;
   closePicker();
   load();
 }
@@ -445,34 +517,162 @@ function bindPicker() {
   window.addEventListener("resize", () => { if (picker.open) renderPicker(); });
 }
 
-async function load() {
-  const token = ++loadToken;
-  writeHash();
-  renderHeader();
+// ---- data ------------------------------------------------------------------
+// Every period the page has opened stays in memory: going back to it is instant, and a copy older than
+// a minute is shown at once and quietly refreshed. The usual periods are fetched in advance.
+
+const FRESH_MS = 60 * 1000;
+const PRESETS = ["today", "yesterday", "7d", "30d", "month", "prev"];
+const dashboards = new Map();   // "source|from|to" → { data, at }
+const peopleLists = new Map();  // "source|from|to|category" → { items, at }
+const inflight = new Map();
+let busyCount = 0;
+
+function viewKey(source = state.source, from = state.from, to = state.to) { return `${source}|${from}|${to}`; }
+function peopleKey(source = state.source, from = state.from, to = state.to, category = state.category) {
+  return `${viewKey(source, from, to)}|${category}`;
+}
+function once(key, run) {  // one request per key at a time: a click joins a prefetch already on its way
+  if (!inflight.has(key)) inflight.set(key, run().finally(() => inflight.delete(key)));
+  return inflight.get(key);
+}
+function fetchDashboard(source, from, to) {
+  return once(`d|${viewKey(source, from, to)}`, async () => {
+    const data = await api(`/api/dashboard?${new URLSearchParams({ source, from, to })}`);
+    dashboards.set(viewKey(source, from, to), { data, at: Date.now() });
+    return data;
+  });
+}
+function fetchPeople(source, from, to, category) {
+  return once(`p|${peopleKey(source, from, to, category)}`, async () => {
+    const data = await api(`/api/people?${new URLSearchParams({ source, from, to, category })}`);
+    peopleLists.set(peopleKey(source, from, to, category), { items: data.items, at: Date.now() });
+    return data.items;
+  });
+}
+function busy(step) {
+  busyCount += step;
+  $("progress").classList.toggle("active", busyCount > 0);
+}
+
+function setStatus(text, working) {
+  $("updated").textContent = text;
+  $("updated").classList.toggle("working", working);
+}
+
+function showDashboard(data) {
+  dashboard = data;
+  $("period-label").textContent = `Период: ${data.period.label}`;
+  setStatus(data.updated ? `Данные на ${dateTime(data.updated)}` : "", false);
+  $("warnings").innerHTML = data.warnings.length ? `<div class="warning">${data.warnings.map(escapeHtml).join("<br>")}</div>` : "";
+  $("chart-title").textContent = data.series.unit === "hour" ? "Лиды и записи по часам" : "Лиды и записи по дням";
   renderSources();
-  $("main").classList.add("loading");
-  if (!dashboard) renderSkeleton();
-  $("updated").textContent = "Считаю…";
+  renderKpis(data.total);
+  renderChart(data.series);
+  renderTable(data);
+  renderTabs(data.total);
+}
+
+// A period the page has not seen yet: placeholders, never the numbers of the previous period.
+function showLoading() {
+  dashboard = null;
+  hideTooltip();
+  $("period-label").textContent = `Период: ${periodLabel(state.from, state.to)}`;
+  setStatus("Загружаю данные…", true);
+  $("warnings").innerHTML = "";
+  $("chart-title").textContent = state.from === state.to ? "Лиды и записи по часам" : "Лиды и записи по дням";
+  renderSources();
+  renderKpis(null);
+  $("chart").innerHTML = `<div class="skeleton-block" style="height:${chartHeight(Math.max($("chart").clientWidth, 260))}px"></div>`;
+  const card = $("sources-card");
+  card.style.display = state.source === "all" ? "" : "none";
+  $("sources-body").innerHTML = Array.from({ length: meta.sources.length }, () =>
+    `<tr class="skeleton-row"><td colspan="8"><span class="skeleton-line"></span></td></tr>`).join("");
+  $("sources-foot").innerHTML = "";
+  renderTabs(null);
+}
+
+function showPeopleLoading() {
+  $("people").innerHTML = Array.from({ length: 6 }, (_, i) => `
+    <li class="person skeleton-person"><span class="skeleton-line" style="width:${[46, 38, 52, 34, 44, 40][i]}%"></span>
+      <span class="skeleton-line short"></span><span class="skeleton-line" style="width:24%"></span></li>`).join("");
+  $("pager").hidden = true;
+}
+
+function showPeople(items) {
+  people = items;
+  renderPeople();
+}
+
+async function loadDashboard({ quiet = false } = {}) {
+  const key = viewKey();
+  const { source, from, to } = state;
+  const cached = dashboards.get(key);
+  if (cached) showDashboard(cached.data);
+  else showLoading();
+  if (cached && !quiet && Date.now() - cached.at < FRESH_MS) return;
+  if (cached) setStatus("Обновляю…", true);
+  busy(1);
   try {
-    const data = await api(`/api/dashboard?${new URLSearchParams({ source: state.source, from: state.from, to: state.to })}`);
-    if (token !== loadToken) return;
-    dashboard = data;
-    $("period-label").textContent = `Период: ${data.period.label}`;
-    $("updated").textContent = data.updated ? `Данные на ${dateTime(data.updated)}` : "";
-    $("warnings").innerHTML = data.warnings.length ? `<div class="warning">${data.warnings.map(escapeHtml).join("<br>")}</div>` : "";
-    $("chart-title").textContent = data.series.unit === "hour" ? "Лиды и записи по часам" : "Лиды и записи по дням";
-    renderSources();
-    renderKpis(data.total);
-    renderChart(data.series);
-    renderTable(data);
-    renderTabs(data.total);
-    await loadPeople();
+    const data = await fetchDashboard(source, from, to);
+    if (key === viewKey()) showDashboard(data);
   } catch (error) {
-    if (token === loadToken) $("updated").textContent = "Не удалось загрузить данные, попробуйте обновить страницу";
+    if (key === viewKey()) setStatus("Не удалось загрузить данные, попробуйте обновить страницу", false);
     console.error(error);
   } finally {
-    if (token === loadToken) $("main").classList.remove("loading");
+    busy(-1);
   }
+}
+
+async function loadPeople({ quiet = false } = {}) {
+  const key = peopleKey();
+  const { source, from, to, category } = state;
+  const cached = peopleLists.get(key);
+  if (cached) showPeople(cached.items);
+  else showPeopleLoading();
+  if (cached && !quiet && Date.now() - cached.at < FRESH_MS) return;
+  busy(1);
+  try {
+    const items = await fetchPeople(source, from, to, category);
+    if (key === peopleKey()) showPeople(items);
+  } catch (error) {
+    if (key === peopleKey()) $("people").innerHTML = `<li class="empty">Не удалось загрузить список</li>`;
+    console.error(error);
+  } finally {
+    busy(-1);
+  }
+}
+
+async function load(options = {}) {
+  writeHash();
+  renderHeader();
+  await Promise.all([loadDashboard(options), loadPeople(options)]);
+  prefetchSoon();
+}
+
+// In the background: the six usual periods of this source, every source for this period, and the lists.
+let prefetchTimer = 0;
+function prefetchSoon() {
+  clearTimeout(prefetchTimer);
+  prefetchTimer = setTimeout(prefetch, 300);
+}
+async function prefetch() {
+  const jobs = [];
+  const ranges = PRESETS.map((preset) => presetRange(preset).map(iso));
+  const dash = (source, from, to) => { if (!dashboards.has(viewKey(source, from, to))) jobs.push(() => fetchDashboard(source, from, to)); };
+  const list = (source, from, to) => { if (!peopleLists.has(peopleKey(source, from, to))) jobs.push(() => fetchPeople(source, from, to, state.category)); };
+  ranges.forEach(([from, to]) => dash(state.source, from, to));
+  ["all", ...meta.sources.map((s) => s.key)].forEach((source) => dash(source, state.from, state.to));
+  ranges.forEach(([from, to]) => list(state.source, from, to));
+  let next = 0;
+  const worker = async () => {
+    while (next < jobs.length) {
+      const job = jobs[next++];
+      try { await job(); } catch (e) { /* only a head start: the click will ask again */ }
+    }
+  };
+  await Promise.all([worker(), worker()]);
+  renderSources();  // counts for every source once the whole-network report is here
 }
 
 // ---- events --------------------------------------------------------------
@@ -482,12 +682,14 @@ function bind() {
     const item = event.target.closest("[data-source]");
     if (!item) return;
     state.source = item.dataset.source;
+    state.page = 1;
     load();
   });
   $("sources-body").addEventListener("click", (event) => {
     const item = event.target.closest("[data-source]");
     if (!item) return;
     state.source = item.dataset.source;
+    state.page = 1;
     window.scrollTo({ top: 0, behavior: "smooth" });
     load();
   });
@@ -496,25 +698,29 @@ function bind() {
     if (!button) return;
     state.preset = button.dataset.preset;
     [state.from, state.to] = presetRange(state.preset).map(iso);
+    state.page = 1;
     load();
   });
   bindPicker();
+  bindPager();
   $("tabs").addEventListener("click", (event) => {
     const tab = event.target.closest("[data-category]");
     if (!tab) return;
     state.category = tab.dataset.category;
-    renderTabs(dashboard.total);
-    loadPeople();
+    state.page = 1;
+    renderTabs(dashboard?.total);
+    loadPeople().then(prefetchSoon);
   });
   $("search").addEventListener("input", (event) => {
     state.search = event.target.value;
-    state.shown = PAGE;
+    state.page = 1;
     $("search-clear").hidden = !state.search;
     renderPeople();
   });
   $("search-clear").addEventListener("click", () => {
     $("search").value = "";
     state.search = "";
+    state.page = 1;
     $("search-clear").hidden = true;
     renderPeople();
     $("search").focus();
@@ -528,7 +734,7 @@ function bind() {
   window.addEventListener("hashchange", () => {
     const before = `${state.source}|${state.from}|${state.to}`;
     readHash();
-    if (`${state.source}|${state.from}|${state.to}` !== before) load();
+    if (`${state.source}|${state.from}|${state.to}` !== before) { state.page = 1; load(); }
   });
   let resize;
   window.addEventListener("resize", () => {
@@ -544,5 +750,5 @@ function bind() {
   if (!state.from) [state.from, state.to] = presetRange(state.preset).map(iso);
   bind();
   await load();
-  setInterval(() => { if (!document.hidden) load(); }, 5 * 60 * 1000);
+  setInterval(() => { if (!document.hidden) load({ quiet: true }); }, 5 * 60 * 1000);
 })();

@@ -142,81 +142,222 @@ function renderKpis(total) {
 
 // ---- chart ---------------------------------------------------------------
 
-function niceMax(value) {
-  if (value <= 4) return 4;
-  const step = Math.pow(10, Math.floor(Math.log10(value)));
-  for (const k of [1, 2, 2.5, 5, 10]) if (k * step >= value) return k * step;
-  return 10 * step;
+// Lines, not bars: base leads at the back, new leads, records on top.
+const SERIES = [
+  { key: "new", label: "Новые лиды", color: "#3d5a80", fill: 0.16 },
+  { key: "base", label: "Лиды из базы", color: "#8ea8ca", fill: 0.2 },
+  { key: "records", label: "Записи", color: "#0d9f6e", fill: 0.14 },
+];
+const DRAW_ORDER = ["base", "new", "records"];
+const HIDDEN_KEY = "mark_chart_hidden";
+const SHORT_MONTHS = ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
+const hiddenSeries = new Set(savedHidden());
+let lastChartKey = "";
+
+function savedHidden() {
+  try { return JSON.parse(localStorage.getItem(HIDDEN_KEY) || "[]").filter((k) => SERIES.some((s) => s.key === k)); } catch (e) { return []; }
 }
 
-function chartHeight(width) { return width < 520 ? 210 : width < 900 ? 240 : 280; }
+function chartHeight(width) { return width < 520 ? 220 : width < 900 ? 250 : 290; }
 
-function renderChart(series) {
+// Whole-number axis steps: 1, 2, 5, 10, 20, 25, 50…
+function axisStep(max) {
+  const raw = Math.max(1, max / 4);
+  const power = Math.pow(10, Math.floor(Math.log10(raw)));
+  for (const k of [1, 2, 2.5, 5, 10]) {
+    const step = k * power;
+    if (step >= raw && Number.isInteger(step)) return step;
+  }
+  return 10 * power;
+}
+
+// Smooth curve that never swings past its points (monotone cubic, like d3.curveMonotoneX): no dips below zero.
+function curveSegments(pts) {
+  const n = pts.length;
+  if (n < 2) return [];
+  const slope = [];
+  for (let i = 0; i < n - 1; i++) slope.push((pts[i + 1][1] - pts[i][1]) / (pts[i + 1][0] - pts[i][0]));
+  const tangent = [slope[0]];
+  for (let i = 1; i < n - 1; i++) {
+    if (slope[i - 1] * slope[i] <= 0) { tangent.push(0); continue; }
+    const h0 = pts[i][0] - pts[i - 1][0];
+    const h1 = pts[i + 1][0] - pts[i][0];
+    const w1 = 2 * h1 + h0;
+    const w2 = h1 + 2 * h0;
+    tangent.push((w1 + w2) / (w1 / slope[i - 1] + w2 / slope[i]));
+  }
+  tangent.push(slope[n - 2]);
+  const r = (v) => Math.round(v * 10) / 10;
+  return pts.slice(0, -1).map((p, i) => {
+    const q = pts[i + 1];
+    const h = (q[0] - p[0]) / 3;
+    return `C${r(p[0] + h)},${r(p[1] + h * tangent[i])} ${r(q[0] - h)},${r(q[1] - h * tangent[i + 1])} ${r(q[0])},${r(q[1])}`;
+  });
+}
+
+function pointTitle(series, period, i) {
+  const p = series.points[i];
+  if (series.unit === "hour") {
+    const d = parse(period.from);
+    return `${d.getDate()} ${MONTHS_GENITIVE[d.getMonth()]}, ${p.label}–${p.label.slice(0, 2)}:59`;
+  }
+  const text = parse(p.label).toLocaleDateString("ru-RU", { weekday: "short", day: "numeric", month: "long" });
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+const MONTHS_GENITIVE = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
+
+function xLabel(series, i) {
+  const p = series.points[i];
+  if (series.unit === "hour") return p.label;
+  const d = parse(p.label);
+  return `${d.getDate()} ${SHORT_MONTHS[d.getMonth()]}`;
+}
+
+function renderLegend(total) {
+  $("legend").innerHTML = SERIES.map((s) => {
+    const value = !total ? "" : total[s.key] === null || total[s.key] === undefined ? "—" : fmt(total[s.key]);
+    const off = hiddenSeries.has(s.key);
+    return `<button type="button" class="legend-item${off ? " off" : ""}" data-series="${s.key}" aria-pressed="${!off}">
+      <i class="legend-dot" style="background:${s.color};color:${s.color}"></i>${s.label}${value ? `<b>${value}</b>` : ""}</button>`;
+  }).join("");
+}
+
+function renderChart(data) {
+  const { series, period } = data;
+  renderLegend(data.total);
   const box = $("chart");
   const width = Math.max(box.clientWidth, 260);
   const height = chartHeight(width);
-  const pad = { l: 32, r: 8, t: 12, b: 28 };
+  const visible = DRAW_ORDER.map((key) => SERIES.find((s) => s.key === key)).filter((s) => !hiddenSeries.has(s.key));
   const points = series.points;
+  const count = Math.max(1, Math.min(series.until ?? points.length, points.length));  // later hours of today have not happened
+  const shown = points.slice(0, count);
+
+  const top = Math.max(0, ...shown.flatMap((p) => visible.map((s) => p[s.key])));
+  const step = top ? axisStep(top * 1.08) : 1;
+  const yMax = top ? Math.ceil((top * 1.08) / step) * step : 4;
+  const ticks = Array.from({ length: Math.round(yMax / step) + 1 }, (_, k) => k * step);
+  const labelWidth = Math.max(...ticks.map((v) => fmt(v).length)) * 6.6 + 14;
+  const pad = { l: Math.round(labelWidth), r: 14, t: 14, b: 30 };
   const innerW = width - pad.l - pad.r;
   const innerH = height - pad.t - pad.b;
-  const max = niceMax(Math.max(1, ...points.map((p) => Math.max(p.new + p.base, p.records))));
-  const slot = innerW / points.length;
-  const barW = Math.max(2, Math.min(28, slot * 0.62));
-  const y = (v) => pad.t + innerH - (v / max) * innerH;
-  const x = (i) => pad.l + slot * i + slot / 2;
+  const inset = Math.min(16, innerW / Math.max(points.length, 2) / 2);
+  const x = (i) => pad.l + inset + (points.length === 1 ? (innerW - 2 * inset) / 2 : ((innerW - 2 * inset) * i) / (points.length - 1));
+  const y = (v) => pad.t + innerH - (v / yMax) * innerH;
+  const r = (v) => Math.round(v * 10) / 10;
 
-  let svg = `<svg viewBox="0 0 ${width} ${height}" style="height:${height}px" preserveAspectRatio="none" role="img" aria-label="График лидов и записей">`;
-  for (let k = 0; k <= 4; k++) {
-    const v = (max / 4) * k;
-    svg += `<line class="grid-line" x1="${pad.l}" x2="${width - pad.r}" y1="${y(v)}" y2="${y(v)}"/>`;
-    svg += `<text class="axis" x="${pad.l - 8}" y="${y(v) + 4}" text-anchor="end">${Math.round(v)}</text>`;
+  let svg = `<svg viewBox="0 0 ${width} ${height}" style="height:${height}px" role="img" aria-label="График: новые лиды ${data.total.new}, из базы ${data.total.base}, записи ${data.total.records ?? "—"}"><defs>`;
+  for (const s of SERIES) {
+    svg += `<linearGradient id="fill-${s.key}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="${s.color}" stop-opacity="${s.fill}"/><stop offset="1" stop-color="${s.color}" stop-opacity="0"/></linearGradient>`;
   }
-  const every = Math.ceil(points.length / Math.max(1, Math.floor(innerW / 48)));
-  points.forEach((p, i) => {
-    const cx = x(i);
-    const hNew = innerH * (p.new / max);
-    const hBase = innerH * (p.base / max);
-    const r = Math.min(4, barW / 2);
-    if (p.base) svg += `<rect x="${cx - barW / 2}" y="${y(p.new + p.base)}" width="${barW}" height="${hBase}" rx="${r}" fill="var(--base)"/>`;
-    if (p.new) svg += `<rect x="${cx - barW / 2}" y="${y(p.new)}" width="${barW}" height="${hNew}" rx="${r}" fill="var(--brand)"/>`;
-    if (i % every === 0) {
-      const label = series.unit === "hour" ? p.label.slice(0, 2) : shortDate(p.label);
-      svg += `<text class="axis" x="${cx}" y="${height - 8}" text-anchor="middle">${label}</text>`;
-    }
-  });
-  const line = points.map((p, i) => `${i ? "L" : "M"}${x(i)},${y(p.records)}`).join(" ");
-  svg += `<path d="${line}" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
-  points.forEach((p, i) => { if (p.records) svg += `<circle cx="${x(i)}" cy="${y(p.records)}" r="3.5" fill="#fff" stroke="var(--green)" stroke-width="2"/>`; });
-  points.forEach((p, i) => {
-    svg += `<rect class="hit" data-i="${i}" x="${pad.l + slot * i}" y="${pad.t}" width="${slot}" height="${innerH}" fill="transparent"/>`;
-  });
-  svg += "</svg>";
-  box.innerHTML = svg;
+  svg += `<clipPath id="chart-reveal"><rect id="chart-reveal-rect" x="0" y="0" width="${width}" height="${height}"/></clipPath></defs>`;
 
-  const tip = $("tooltip");
-  const show = (hit, pageX, pageY) => {
-    const p = points[Number(hit.dataset.i)];
-    const title = series.unit === "hour" ? `${p.label}–${p.label.slice(0, 2)}:59` : parse(p.label).toLocaleDateString("ru-RU", { day: "numeric", month: "long", weekday: "short" });
-    tip.innerHTML = `<b>${title}</b><br>Новые: ${p.new} · из базы: ${p.base}<br>Записи: ${p.records}`;
-    tip.style.opacity = 1;
-    const w = tip.offsetWidth;
-    const h = tip.offsetHeight;
-    const left = Math.min(Math.max(pageX - w / 2, window.scrollX + 8), window.scrollX + document.documentElement.clientWidth - w - 8);
-    tip.style.transform = `translate(${left}px, ${pageY - h - 14}px)`;
-    box.querySelectorAll(".hit").forEach((other) => other.setAttribute("fill", other === hit ? "rgba(61,90,128,.06)" : "transparent"));
+  ticks.forEach((v, k) => {
+    svg += `<line class="${k ? "grid-line" : "base-line"}" x1="${pad.l}" x2="${width - pad.r}" y1="${r(y(v))}" y2="${r(y(v))}"/>`;
+    svg += `<text class="axis" x="${pad.l - 10}" y="${r(y(v)) + 4}" text-anchor="end">${fmt(v)}</text>`;
+  });
+
+  // x labels: as many as fit, counted back from the latest point so it always has one
+  const labelW = series.unit === "hour" ? 40 : 48;
+  const room = Math.max(1, Math.floor((innerW - 2 * inset) / labelW));
+  const every = series.unit === "hour"
+    ? [1, 2, 3, 4, 6, 8, 12].find((k) => points.length / k <= room) || 12
+    : [1, 2, 3, 5, 7, 10, 14, 15, 30].find((k) => points.length / k <= room) || 30;
+  points.forEach((p, i) => {
+    const marked = series.unit === "hour" ? i % every === 0 : (points.length - 1 - i) % every === 0;
+    if (!marked) return;
+    const cx = Math.min(Math.max(x(i), pad.l + 18), width - pad.r - 18);
+    svg += `<text class="axis${i >= count ? " future" : ""}" x="${r(cx)}" y="${height - 9}" text-anchor="middle">${xLabel(series, i)}</text>`;
+  });
+
+  // areas, then lines; the part of today that is still going is dashed
+  svg += `<g clip-path="url(#chart-reveal)">`;
+  const live = series.live && count >= 2;
+  for (const s of visible) {
+    const pts = shown.map((p, i) => [x(i), y(p[s.key])]);
+    const segments = curveSegments(pts);
+    if (!segments.length) continue;
+    const start = `M${r(pts[0][0])},${r(pts[0][1])}`;
+    const base = r(y(0));
+    svg += `<path d="${start}${segments.join("")}L${r(pts[pts.length - 1][0])},${base}L${r(pts[0][0])},${base}Z" fill="url(#fill-${s.key})"/>`;
+    const solid = live ? segments.slice(0, -1) : segments;
+    if (solid.length) svg += `<path class="series-line" d="${start}${solid.join("")}" stroke="${s.color}"/>`;
+    if (live) {
+      const from = pts[pts.length - 2];
+      svg += `<path class="series-line live" d="M${r(from[0])},${r(from[1])}${segments[segments.length - 1]}" stroke="${s.color}"/>`;
+    }
+  }
+  for (const s of visible) {
+    if (count === 1) {
+      svg += `<circle cx="${r(x(0))}" cy="${r(y(shown[0][s.key]))}" r="4" fill="${s.color}" stroke="#fff" stroke-width="2"/>`;
+    } else if (series.live) {
+      const last = count - 1;
+      svg += `<circle class="end-dot" cx="${r(x(last))}" cy="${r(y(shown[last][s.key]))}" r="3.5" fill="${s.color}" stroke="#fff" stroke-width="2"/>`;
+    }
+  }
+  svg += `</g>`;
+
+  // hover: one guide line and a dot per series, moved, never rebuilt
+  svg += `<g class="cross" opacity="0"><line class="cross-line" x1="0" x2="0" y1="${pad.t}" y2="${r(y(0))}"/>`;
+  for (const s of visible) svg += `<circle class="cross-dot" data-series="${s.key}" r="4.5" fill="#fff" stroke="${s.color}" stroke-width="2.5"/>`;
+  svg += `</g><rect class="chart-hit" x="${pad.l}" y="0" width="${innerW}" height="${height}" fill="transparent"/></svg>`;
+  box.innerHTML = `${svg}<div class="chart-tip" id="chart-tip" aria-hidden="true"></div>`;
+
+  // draw in from the left when the numbers are new, not on resize or a legend click
+  const key = `${viewKey()}|${JSON.stringify(points)}`;
+  const reveal = $("chart-reveal-rect");
+  if (key !== lastChartKey && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    const started = performance.now();
+    const frame = (now) => {
+      const t = Math.min(1, Math.max(0, (now - started) / 700));  // a frame can be stamped a little before `started`
+      reveal.setAttribute("width", String(width * (1 - Math.pow(1 - t, 3))));
+      if (t < 1 && reveal.isConnected) requestAnimationFrame(frame);
+    };
+    reveal.setAttribute("width", "0");
+    requestAnimationFrame(frame);
+  }
+  lastChartKey = key;
+
+  const cross = box.querySelector(".cross");
+  const crossLine = box.querySelector(".cross-line");
+  const tip = $("chart-tip");
+  const hit = box.querySelector(".chart-hit");
+  let current = -1;
+  const show = (clientX) => {
+    const rect = hit.getBoundingClientRect();
+    const local = ((clientX - rect.left) / rect.width) * innerW + pad.l;
+    let i = 0;
+    for (let k = 1; k < count; k++) if (Math.abs(x(k) - local) < Math.abs(x(i) - local)) i = k;
+    if (i === current) return;
+    current = i;
+    const cx = r(x(i));
+    crossLine.setAttribute("x1", cx);
+    crossLine.setAttribute("x2", cx);
+    cross.querySelectorAll(".cross-dot").forEach((dot) => {
+      dot.setAttribute("cx", cx);
+      dot.setAttribute("cy", r(y(shown[i][dot.dataset.series])));
+    });
+    cross.setAttribute("opacity", "1");
+    const p = shown[i];
+    tip.innerHTML = `<div class="tip-title">${pointTitle(series, period, i)}${series.live && i === count - 1 ? ' <em>идёт сейчас</em>' : ""}</div>` +
+      SERIES.map((s) => `<div class="tip-row${hiddenSeries.has(s.key) ? " off" : ""}"><i style="background:${s.color}"></i><span>${s.label}</span><b>${fmt(p[s.key])}</b></div>`).join("");
+    const boxW = box.clientWidth;
+    const scale = boxW / width;
+    const tipW = tip.offsetWidth;
+    let left = cx * scale + 14;
+    if (left + tipW > boxW - 4) left = cx * scale - tipW - 14;
+    tip.style.transform = `translate(${Math.max(4, left)}px, ${pad.t * scale}px)`;
+    tip.classList.add("visible");
   };
   const hide = () => {
-    tip.style.opacity = 0;
-    box.querySelectorAll(".hit").forEach((other) => other.setAttribute("fill", "transparent"));
+    current = -1;
+    cross.setAttribute("opacity", "0");
+    tip.classList.remove("visible");
   };
-  box.querySelectorAll(".hit").forEach((hit) => {
-    hit.addEventListener("mousemove", (event) => show(hit, event.pageX, event.pageY));
-    hit.addEventListener("mouseleave", hide);
-    hit.addEventListener("touchstart", (event) => {
-      const touch = event.touches[0];
-      show(hit, touch.pageX, touch.pageY);
-    }, { passive: true });
-  });
+  hit.addEventListener("pointermove", (event) => show(event.clientX));
+  hit.addEventListener("pointerdown", (event) => show(event.clientX));
+  hit.addEventListener("pointerleave", (event) => { if (event.pointerType === "mouse") hide(); });
   hideTooltip = hide;
 }
 
@@ -568,7 +709,7 @@ function showDashboard(data) {
   $("chart-title").textContent = data.series.unit === "hour" ? "Лиды и записи по часам" : "Лиды и записи по дням";
   renderSources();
   renderKpis(data.total);
-  renderChart(data.series);
+  renderChart(data);
   renderTable(data);
   renderTabs(data.total);
 }
@@ -583,6 +724,7 @@ function showLoading() {
   $("chart-title").textContent = state.from === state.to ? "Лиды и записи по часам" : "Лиды и записи по дням";
   renderSources();
   renderKpis(null);
+  renderLegend(null);
   $("chart").innerHTML = `<div class="skeleton-block" style="height:${chartHeight(Math.max($("chart").clientWidth, 260))}px"></div>`;
   const card = $("sources-card");
   card.style.display = state.source === "all" ? "" : "none";
@@ -703,6 +845,16 @@ function bind() {
   });
   bindPicker();
   bindPager();
+  $("legend").addEventListener("click", (event) => {
+    const item = event.target.closest("[data-series]");
+    if (!item) return;
+    const key = item.dataset.series;
+    if (hiddenSeries.has(key)) hiddenSeries.delete(key);
+    else if (hiddenSeries.size < SERIES.length - 1) hiddenSeries.add(key);  // one line always stays
+    else return;
+    try { localStorage.setItem(HIDDEN_KEY, JSON.stringify([...hiddenSeries])); } catch (e) { /* storage blocked */ }
+    if (dashboard) renderChart(dashboard);
+  });
   $("tabs").addEventListener("click", (event) => {
     const tab = event.target.closest("[data-category]");
     if (!tab) return;
@@ -739,7 +891,7 @@ function bind() {
   let resize;
   window.addEventListener("resize", () => {
     clearTimeout(resize);
-    resize = setTimeout(() => dashboard && renderChart(dashboard.series), 150);
+    resize = setTimeout(() => dashboard && renderChart(dashboard), 150);
   });
 }
 

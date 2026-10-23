@@ -233,11 +233,8 @@
     a.person-name:hover { color: var(--brand); text-decoration: underline; }
     .person-sub { color: var(--muted); font-size: 12px; grid-column: 1; }
     .person-when { color: var(--muted); font-size: 12px; text-align: right; grid-row: 1 / span 2; grid-column: 2; align-self: center; font-variant-numeric: tabular-nums; }
-    .dialog-link {
-      display: inline-flex; align-items: center; gap: 4px; margin-left: 10px; padding: 1px 8px 1px 7px; border-radius: 999px;
-      background: var(--brand-soft); color: var(--brand); font-size: 11.5px; font-weight: 600; text-decoration: none; white-space: nowrap;
-    }
-    @media (hover: hover) { .dialog-link:hover { background: #dfe7f1; } }
+    .person-name .chat-icon { display: inline-block; vertical-align: -1px; margin-left: 6px; color: var(--muted-2); }
+    @media (hover: hover) { a.person-name:hover .chat-icon { color: var(--brand); } }
     .chip { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--brand-soft); color: var(--brand); margin-right: 6px; }
     #people-card { scroll-margin-top: 16px; }
     .pager {
@@ -364,7 +361,6 @@
       .table-wrap { overflow: visible; }
       .card-head { flex-direction: column; align-items: stretch; }
       .legend { gap: 6px; }
-      .dialog-link { display: flex; width: fit-content; margin: 5px 0 1px; padding: 3px 10px 3px 8px; font-size: 12px; }
       .pager { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; }
       .pager-info { margin: 0; }
       .pager-pages { grid-row: 2; grid-column: 1 / -1; justify-content: space-between; }
@@ -483,6 +479,6 @@
   </div>
   <div class="progress" id="progress" aria-hidden="true"></div>
   <div class="backdrop" id="backdrop" hidden></div>
-  <script src="static/app.js?v=14"></script>
+  <script src="static/app.js?v=15"></script>
 </body>
 </html>

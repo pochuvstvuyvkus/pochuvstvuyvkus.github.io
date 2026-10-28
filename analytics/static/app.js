@@ -412,7 +412,7 @@ function renderPeople() {
     const chips = [];
     if (state.source === "all") chips.push(`<span class="chip" style="background:${sourceColor(meta.sources.find((s) => s.title === p.source)?.key)}1a;color:${sourceColor(meta.sources.find((s) => s.title === p.source)?.key)}">${p.source}</span>`);
     let sub = chips.join("");
-    if (isRecord) sub += `салон ${p.salon}${p.visit ? ` · визит ${dateTime(p.visit)}` : ""}${p.vk ? "" : " · переписка не найдена"}`;
+    if (isRecord) sub += `салон ${p.salon}${p.visit ? ` · визит ${dateTime(p.visit)}` : ""}${p.vk ? "" : p.no_client ? " · запись без клиента" : " · переписка не найдена"}`;
     else if (!p.dialog) sub += p.vk.replace("https://", "");
     return `<li class="person">${name}<div class="person-when">${isRecord ? "создана " : ""}${dateTime(p.at)}</div><div class="person-sub">${sub}</div></li>`;
   }).join("");
